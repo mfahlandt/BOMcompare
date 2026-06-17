@@ -1,0 +1,67 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "demo-binary-sbom",
+  "documentNamespace": "https://example.com/demo/binary",
+  "creationInfo": {
+    "created": "2026-06-16T16:05:00Z",
+    "creators": [
+      "Organization: Anchore, Inc",
+      "Tool: syft-1.42.3"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "documentDescribes": ["SPDXRef-Package-mainbin"],
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-mainbin",
+      "name": "github.com/example/demo",
+      "versionInfo": "v1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "NOASSERTION",
+      "filesAnalyzed": false,
+      "sourceInfo": "acquired package info from go module information: /demo",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        { "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:golang/github.com/example/demo@v1.0.0" }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cobra",
+      "name": "github.com/spf13/cobra",
+      "versionInfo": "v1.8.0",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "NOASSERTION",
+      "filesAnalyzed": false,
+      "checksums": [ { "algorithm": "SHA256", "checksumValue": "aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777" } ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        { "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:golang/github.com/spf13/cobra@v1.8.0" },
+        { "referenceCategory": "SECURITY", "referenceType": "cpe23Type", "referenceLocator": "cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*" },
+        { "referenceCategory": "SECURITY", "referenceType": "cpe23Type", "referenceLocator": "cpe:2.3:a:cobra:cobra:v1.8.0:*:*:*:*:*:*:*" }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-stdlib",
+      "name": "stdlib",
+      "versionInfo": "go1.23.4",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        { "referenceCategory": "SECURITY", "referenceType": "cpe23Type", "referenceLocator": "cpe:2.3:a:golang:go:go1.23.4:*:*:*:*:*:*:*" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "spdxElementId": "SPDXRef-DOCUMENT", "relatedSpdxElement": "SPDXRef-Package-mainbin", "relationshipType": "DESCRIBES" },
+    { "spdxElementId": "SPDXRef-Package-mainbin", "relatedSpdxElement": "SPDXRef-Package-cobra", "relationshipType": "CONTAINS" },
+    { "spdxElementId": "SPDXRef-Package-mainbin", "relatedSpdxElement": "SPDXRef-Package-stdlib", "relationshipType": "CONTAINS" },
+    { "spdxElementId": "SPDXRef-Package-cobra", "relatedSpdxElement": "SPDXRef-Package-mainbin", "relationshipType": "OTHER" }
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "demo-source-version-mismatch",
+  "documentNamespace": "https://example.com/demo/source",
+  "creationInfo": {
+    "created": "2026-06-16T16:02:16Z",
+    "creators": [
+      "Tool: mikebom-0.1.0-alpha.47",
+      "Organization: mikebom contributors",
+      "Tool: mikebom-0.1.0-alpha.47 source: git:https://github.com/example/demo#v1.0.0"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "documentDescribes": [
+    "SPDXRef-Package-main"
+  ],
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-main",
+      "name": "demo",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "Organization: example",
+      "filesAnalyzed": false,
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/demo@1.0.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:example:demo:1.0.0:*:*:*:*:*:*:*"
+        }
+      ],
+      "annotations": [
+        {
+          "annotator": "Tool: mikebom-0.1.0-alpha.47",
+          "annotationDate": "2026-06-16T16:02:16Z",
+          "annotationType": "OTHER",
+          "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cobra",
+      "name": "github.com/spf13/cobra",
+      "versionInfo": "v1.9.9",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "Organization: github.com/spf13",
+      "filesAnalyzed": false,
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777"
+        }
+      ],
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/spf13/cobra@v1.9.9"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*"
+        }
+      ],
+      "annotations": [
+        {
+          "annotator": "Tool: mikebom-0.1.0-alpha.47",
+          "annotationDate": "2026-06-16T16:02:16Z",
+          "annotationType": "OTHER",
+          "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-yaml",
+      "name": "gopkg.in/yaml.v3",
+      "versionInfo": "v3.0.1",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "Organization: gopkg.in",
+      "filesAnalyzed": false,
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1111000022223333444455556666777788889999aaaabbbbccccddddeeeeffff"
+        }
+      ],
+      "licenseDeclared": "MIT AND Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/yaml.v3@v3.0.1"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:yaml:yaml.v3:v3.0.1:*:*:*:*:*:*:*"
+        }
+      ],
+      "annotations": [
+        {
+          "annotator": "Tool: mikebom-0.1.0-alpha.47",
+          "annotationDate": "2026-06-16T16:02:16Z",
+          "annotationType": "OTHER",
+          "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-testify",
+      "name": "github.com/stretchr/testify",
+      "versionInfo": "v1.9.0",
+      "downloadLocation": "NOASSERTION",
+      "supplier": "Organization: github.com/stretchr",
+      "filesAnalyzed": false,
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2222000033334444555566667777888899990000aaaabbbbccccddddeeeeffff"
+        }
+      ],
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/stretchr/testify@v1.9.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:stretchr:testify:v1.9.0:*:*:*:*:*:*:*"
+        }
+      ],
+      "annotations": [
+        {
+          "annotator": "Tool: mikebom-0.1.0-alpha.47",
+          "annotationDate": "2026-06-16T16:02:16Z",
+          "annotationType": "OTHER",
+          "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:lifecycle-scope\",\"value\":\"test\"}"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-main",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-main",
+      "relatedSpdxElement": "SPDXRef-Package-cobra",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-cobra",
+      "relatedSpdxElement": "SPDXRef-Package-yaml",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-testify",
+      "relatedSpdxElement": "SPDXRef-Package-main",
+      "relationshipType": "TEST_DEPENDENCY_OF"
+    }
+  ],
+  "annotations": [
+    {
+      "annotator": "Tool: mikebom-0.1.0-alpha.47",
+      "annotationDate": "2026-06-16T16:02:16Z",
+      "annotationType": "OTHER",
+      "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:generation-context\",\"value\":\"filesystem-scan\"}"
+    },
+    {
+      "annotator": "Tool: mikebom-0.1.0-alpha.47",
+      "annotationDate": "2026-06-16T16:02:16Z",
+      "annotationType": "OTHER",
+      "comment": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:graph-completeness\",\"value\":\"partial\"}"
+    }
+  ]
+}

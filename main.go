@@ -31,8 +31,8 @@ func run(args []string, stdout, stderr *os.File) int {
 	fs.SetOutput(stderr)
 
 	var (
-		fileA      = fs.String("a", "", "path to first SPDX JSON SBOM (or first positional arg)")
-		fileB      = fs.String("b", "", "path to second SPDX JSON SBOM (or second positional arg)")
+		fileA      = fs.String("a", "", "path to first SBOM (SPDX or CycloneDX; or first positional arg)")
+		fileB      = fs.String("b", "", "path to second SBOM (SPDX or CycloneDX; or second positional arg)")
 		format     = fs.String("format", "markdown", "output format: markdown | json | summary")
 		out        = fs.String("o", "", "write report to this file instead of stdout")
 		exitOnDiff = fs.Bool("exit-on-diff", false, "exit with code 2 if significant differences are found (CI gating)")
@@ -40,15 +40,18 @@ func run(args []string, stdout, stderr *os.File) int {
 		showVer    = fs.Bool("version", false, "print version and exit")
 	)
 	fs.Usage = func() {
-		fmt.Fprintf(stderr, "sbom-comparison %s — compare two SPDX 2.3 JSON SBOMs\n\n", version)
-		fmt.Fprintf(stderr, "Usage:\n  sbom-comparison [flags] <sbom-a.json> <sbom-b.json>\n\n")
+		fmt.Fprintf(stderr, "sbom-comparison %s — compare two SBOMs (SPDX or CycloneDX)\n\n", version)
+		fmt.Fprintf(stderr, "Usage:\n  sbom-comparison [flags] <sbom-a> <sbom-b>\n\n")
+		fmt.Fprintf(stderr, "Supported formats (auto-detected): SPDX JSON, SPDX tag-value,\n")
+		fmt.Fprintf(stderr, "CycloneDX JSON, CycloneDX XML. The two inputs may be in different formats.\n\n")
 		fmt.Fprintf(stderr, "Flags:\n")
 		fs.PrintDefaults()
 		fmt.Fprintf(stderr, "\nExamples:\n")
 		fmt.Fprintf(stderr, "  sbom-comparison a.spdx.json b.spdx.json\n")
-		fmt.Fprintf(stderr, "  sbom-comparison --format summary a.spdx.json b.spdx.json\n")
-		fmt.Fprintf(stderr, "  sbom-comparison --format json -o report.json a.spdx.json b.spdx.json\n")
-		fmt.Fprintf(stderr, "  sbom-comparison --exit-on-diff a.spdx.json b.spdx.json   # CI gate\n")
+		fmt.Fprintf(stderr, "  sbom-comparison mikebom.spdx.json syft.cdx.json   # cross-format\n")
+		fmt.Fprintf(stderr, "  sbom-comparison --format summary a.spdx b.cdx.xml\n")
+		fmt.Fprintf(stderr, "  sbom-comparison --format json -o report.json a.spdx.json b.cdx.json\n")
+		fmt.Fprintf(stderr, "  sbom-comparison --exit-on-diff old.spdx.json new.spdx.json   # CI gate\n")
 	}
 
 	if err := fs.Parse(args); err != nil {

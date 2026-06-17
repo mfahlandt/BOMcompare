@@ -17,6 +17,11 @@ type Report struct {
 	LabelA string `json:"labelA"`
 	LabelB string `json:"labelB"`
 
+	// FormatA/FormatB record the detected serialization of each input (e.g.
+	// "spdx-json", "cyclonedx-xml"), which is useful context for cross-format runs.
+	FormatA string `json:"formatA"`
+	FormatB string `json:"formatB"`
+
 	ContextA string `json:"contextA"`
 	ContextB string `json:"contextB"`
 	// ContextNote is a human note when the two SBOMs differ in scope (e.g. a
@@ -103,6 +108,8 @@ func Run(a, b *sbom.Parsed, opts Options) *Report {
 		B:        b,
 		LabelA:   a.ToolLabel,
 		LabelB:   b.ToolLabel,
+		FormatA:  a.Format,
+		FormatB:  b.Format,
 		ContextA: a.Context,
 		ContextB: b.Context,
 	}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.5" serialNumber="urn:uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" version="1">
+  <metadata>
+    <timestamp>2026-06-16T16:12:00Z</timestamp>
+    <tools>
+      <tool>
+        <vendor>CycloneDX</vendor>
+        <name>cyclonedx-gomod</name>
+        <version>1.9.0</version>
+      </tool>
+    </tools>
+    <component type="application" bom-ref="pkg:golang/github.com/example/demo@v1.0.0">
+      <name>github.com/example/demo</name>
+      <version>v1.0.0</version>
+      <purl>pkg:golang/github.com/example/demo@v1.0.0</purl>
+    </component>
+  </metadata>
+  <components>
+    <component type="library" bom-ref="pkg:golang/github.com/spf13/cobra@v1.8.0">
+      <group>github.com/spf13</group>
+      <name>cobra</name>
+      <version>v1.8.0</version>
+      <purl>pkg:golang/github.com/spf13/cobra@v1.8.0</purl>
+      <cpe>cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*</cpe>
+      <scope>required</scope>
+      <supplier>
+        <name>github.com/spf13</name>
+      </supplier>
+      <hashes>
+        <hash alg="SHA-256">aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+    </component>
+  </components>
+  <dependencies>
+    <dependency ref="pkg:golang/github.com/example/demo@v1.0.0">
+      <dependency ref="pkg:golang/github.com/spf13/cobra@v1.8.0"/>
+    </dependency>
+    <dependency ref="pkg:golang/github.com/spf13/cobra@v1.8.0"/>
+  </dependencies>
+</bom>

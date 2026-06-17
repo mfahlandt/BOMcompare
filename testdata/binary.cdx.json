@@ -1,0 +1,72 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-06-16T16:10:00Z",
+    "tools": {
+      "components": [
+        { "type": "application", "name": "cyclonedx-gomod", "version": "1.9.0" }
+      ]
+    },
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:golang/github.com/example/demo@v1.0.0",
+      "name": "github.com/example/demo",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/github.com/example/demo@v1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:golang/github.com/spf13/cobra@v1.8.0",
+      "name": "cobra",
+      "group": "github.com/spf13",
+      "version": "v1.8.0",
+      "purl": "pkg:golang/github.com/spf13/cobra@v1.8.0",
+      "cpe": "cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*",
+      "scope": "required",
+      "supplier": { "name": "github.com/spf13" },
+      "hashes": [
+        { "alg": "SHA-256", "content": "aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777" }
+      ],
+      "licenses": [
+        { "license": { "id": "Apache-2.0" } }
+      ],
+      "evidence": {
+        "identity": { "field": "purl", "confidence": 0.9, "methods": [{ "technique": "binary-analysis", "confidence": 0.9 }] }
+      }
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:golang/github.com/stretchr/testify@v1.9.0",
+      "name": "testify",
+      "group": "github.com/stretchr",
+      "version": "v1.9.0",
+      "purl": "pkg:golang/github.com/stretchr/testify@v1.9.0",
+      "scope": "optional",
+      "supplier": { "name": "github.com/stretchr" },
+      "licenses": [
+        { "license": { "id": "MIT" } }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:golang/github.com/example/demo@v1.0.0",
+      "dependsOn": [
+        "pkg:golang/github.com/spf13/cobra@v1.8.0",
+        "pkg:golang/github.com/stretchr/testify@v1.9.0"
+      ]
+    },
+    {
+      "ref": "pkg:golang/github.com/spf13/cobra@v1.8.0",
+      "dependsOn": []
+    }
+  ],
+  "compositions": [
+    { "aggregate": "complete", "dependencies": ["pkg:golang/github.com/example/demo@v1.0.0"] }
+  ]
+}

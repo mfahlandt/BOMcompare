@@ -1,13 +1,49 @@
 # sbom-comparison
 
-A single-binary Go CLI that compares two **SPDX 2.3 JSON SBOMs** and produces a
-structured quality diff report — package coverage, version accuracy, license
-resolution, PURL/CPE quality, dependency-graph depth, supplier/checksum
-coverage, annotation richness and a weighted composite score.
+A single-binary Go CLI that compares two SBOMs — **SPDX** (JSON or tag-value) or
+**CycloneDX** (JSON or XML) — and produces a structured quality diff report:
+package coverage, version accuracy, license resolution, PURL/CPE quality,
+dependency-graph depth, supplier/checksum coverage, annotation richness and a
+weighted composite score.
+
+The two inputs may be in **different formats** (e.g. compare a CycloneDX SBOM
+from one tool against an SPDX SBOM from another) — every format is normalized to
+a common internal model before comparison.
 
 It turns the kind of manual, ad-hoc SBOM comparison you might do by hand into a
 reusable, CI-friendly tool. The methodology is inspired by
 [mlieberman85's SBOM quality benchmark](https://gist.github.com/mlieberman85/cb0ed7b600efb211dce0633e2c392626).
+
+## Supported formats
+
+The input format is **auto-detected** per file (by content, not extension), so
+you can mix and match:
+
+| Format | Detection | Notes |
+|--------|-----------|-------|
+| **SPDX JSON** | `{ "spdxVersion": ... }` | SPDX 2.2 / 2.3 |
+| **SPDX tag-value** | `SPDXVersion:` / `PackageName:` lines | the `.spdx` text format, incl. multi-line `<text>` blocks |
+| **CycloneDX JSON** | `{ "bomFormat"/"specVersion": ... }` | v1.4 and v1.5 (tools as array *or* `{components}`) |
+| **CycloneDX XML** | leading `<bom ...>` | v1.4 and v1.5 |
+
+Because SPDX and CycloneDX model some things differently, the tool normalizes:
+
+- CycloneDX `components[]` → packages; `metadata.component` → the main module.
+- CycloneDX `purl` / `cpe` (string or array) → package identity.
+- CycloneDX `licenses[]` (`license.id` / `license.name` / `expression`) →
+  mapped to `licenseConcluded` (CycloneDX has no declared/concluded split).
+- CycloneDX `hashes[]` (`alg: "SHA-256"`) → checksum coverage.
+- CycloneDX `scope: optional|excluded` → treated as non-runtime (test-scoped).
+- CycloneDX `dependencies[]` (`ref` / `dependsOn`) → SPDX-style `DEPENDS_ON`
+  relationships, so the dependency-graph analysis is identical across formats.
+- CycloneDX `evidence.identity` and `properties[]` → surfaced as annotations so
+  transparency scoring credits producers that ship them.
+
+> **Note on cross-format license scoring:** SPDX separates `licenseDeclared`
+> from `licenseConcluded`; CycloneDX has a single license notion. When comparing
+> an SPDX SBOM (data often in `licenseDeclared`) against a CycloneDX one (mapped
+> to `licenseConcluded`), read the per-field rates in the License section rather
+> than a single headline number.
 
 ## Why
 
@@ -45,15 +81,18 @@ Requires Go 1.23+. No dependencies beyond the standard library.
 ## Usage
 
 ```bash
-sbom-comparison [flags] <sbom-a.json> <sbom-b.json>
+sbom-comparison [flags] <sbom-a> <sbom-b>
 ```
+
+Inputs can be any supported format (SPDX JSON/tag-value, CycloneDX JSON/XML) and
+the two files need not be the same format.
 
 ### Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-a <file>` | — | First SPDX JSON SBOM (or first positional arg) |
-| `-b <file>` | — | Second SPDX JSON SBOM (or second positional arg) |
+| `-a <file>` | — | First SBOM (SPDX or CycloneDX; or first positional arg) |
+| `-b <file>` | — | Second SBOM (SPDX or CycloneDX; or second positional arg) |
 | `--format <fmt>` | `markdown` | Output format: `markdown`, `json`, or `summary` |
 | `-o <file>` | stdout | Write the report to a file |
 | `--exit-on-diff` | `false` | Exit with code **2** if **significant** differences are found (CI gate) |
@@ -72,14 +111,20 @@ sbom-comparison [flags] <sbom-a.json> <sbom-b.json>
 ### Examples
 
 ```bash
-# Full markdown report
+# Full markdown report (same format)
 sbom-comparison mikebom.spdx.json syft.spdx.json
+
+# Cross-format: CycloneDX vs SPDX
+sbom-comparison syft.cdx.json mikebom.spdx.json
+
+# SPDX tag-value vs CycloneDX XML
+sbom-comparison app.spdx app.cdx.xml
 
 # Just the scorecard
 sbom-comparison --format summary mikebom.spdx.json syft.spdx.json
 
 # Machine-readable output to a file
-sbom-comparison --format json -o report.json a.spdx.json b.spdx.json
+sbom-comparison --format json -o report.json a.spdx.json b.cdx.json
 
 # CI gate: fail the build on a significant regression
 sbom-comparison --exit-on-diff old-release.spdx.json new-release.spdx.json
@@ -90,7 +135,7 @@ sbom-comparison --exit-on-diff old-release.spdx.json new-release.spdx.json
 | Code | Meaning |
 |------|---------|
 | `0` | Success (no significant differences, or `--exit-on-diff` not set) |
-| `1` | Error (bad arguments, unreadable or invalid SPDX) |
+| `1` | Error (bad arguments, unreadable or unrecognized SBOM) |
 | `2` | Significant differences found **and** `--exit-on-diff` was set |
 
 A version mismatch on a common package is *always* significant. A large
@@ -171,6 +216,11 @@ Test fixtures live in `testdata/`:
   no suppliers/annotations, a `pkg:golang` main module).
 - `source-version-mismatch.spdx.json` — `source` with one package version bumped,
   to exercise `VERSION_MISMATCH` and CI gating.
+- `binary.spdx` — the same binary SBOM in **SPDX tag-value** form (multi-line
+  `<text>`, `PackageChecksum`/`ExternalRef`/`Relationship` lines).
+- `binary.cdx.json` — a **CycloneDX JSON** (v1.5) SBOM of the same binary
+  (scoped components, hashes, `dependencies[]`, evidence).
+- `binary.cdx.xml` — the **CycloneDX XML** equivalent.
 
 ## Project layout
 
@@ -178,10 +228,16 @@ Test fixtures live in `testdata/`:
 sbom-comparison/
 ├── main.go                 # CLI entry point, flags, exit codes
 ├── pkg/
-│   ├── sbom/               # SPDX 2.3 types + parse/normalize
+│   ├── sbom/               # format detection + parse/normalize
+│   │   ├── spdx.go             # SPDX 2.3 JSON types
+│   │   ├── spdx_tagvalue.go    # SPDX tag-value parser
+│   │   ├── cyclonedx.go        # CycloneDX JSON types
+│   │   ├── cyclonedx_xml.go    # CycloneDX XML parser
+│   │   ├── cyclonedx_normalize.go  # CycloneDX → shared model
+│   │   └── parse.go            # Load(), DetectFormat(), normalization
 │   ├── compare/            # comparison engine + finding classification
 │   └── report/             # markdown / json / summary renderers
-└── testdata/               # SPDX fixtures used by tests
+└── testdata/               # SPDX + CycloneDX fixtures used by tests
 ```
 
 ## License

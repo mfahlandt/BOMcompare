@@ -16,8 +16,20 @@ func RenderMarkdown(r *compare.Report) string {
 
 	w("# SBOM Comparison Report\n\n")
 	w("**%s** vs **%s**\n\n", r.LabelA, r.LabelB)
+	w("Formats: **%s** = `%s`, **%s** = `%s`.\n\n", r.LabelA, r.FormatA, r.LabelB, r.FormatB)
 	w("Methodology inspired by [mlieberman85's SBOM quality benchmark](https://gist.github.com/mlieberman85/cb0ed7b600efb211dce0633e2c392626).\n\n")
 	w("---\n\n")
+
+	if r.FormatA != r.FormatB && crossStandard(r.FormatA, r.FormatB) {
+		w("## Note: Cross-Standard Comparison\n\n")
+		w("These SBOMs use different standards (SPDX vs CycloneDX). Field semantics " +
+			"differ — most importantly, SPDX separates `licenseDeclared` from " +
+			"`licenseConcluded` while CycloneDX has a single license notion (mapped to " +
+			"`licenseConcluded` here). Read per-field license rates rather than a single " +
+			"headline number, and treat small structural deltas as format differences " +
+			"rather than defects.\n\n")
+		w("---\n\n")
+	}
 
 	if r.ContextNote != "" {
 		w("## Key Insight: Source SBOM vs Binary SBOM\n\n")

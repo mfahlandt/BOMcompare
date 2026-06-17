@@ -6,7 +6,26 @@ import (
 	"strings"
 
 	"github.com/mfahlandt/sbom-comparison/pkg/compare"
+	"github.com/mfahlandt/sbom-comparison/pkg/sbom"
 )
+
+// crossStandard reports whether two detected formats belong to different SBOM
+// standards (SPDX vs CycloneDX), which changes field semantics.
+func crossStandard(fa, fb string) bool {
+	return standardOf(fa) != standardOf(fb) &&
+		standardOf(fa) != "" && standardOf(fb) != ""
+}
+
+func standardOf(format string) string {
+	switch format {
+	case sbom.FormatSPDXJSON, sbom.FormatSPDXTagValue:
+		return "spdx"
+	case sbom.FormatCycloneDXJSON, sbom.FormatCycloneDXXML:
+		return "cyclonedx"
+	default:
+		return ""
+	}
+}
 
 // buildRecommendations derives actionable advice from the analyzed report,
 // mirroring the recommendation style of the manual kubelb comparison.

@@ -11,8 +11,8 @@ import (
 func RenderSummary(r *compare.Report) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "SBOM Comparison Summary\n")
-	fmt.Fprintf(&b, "A: %s   (%s)\n", r.LabelA, r.ContextA)
-	fmt.Fprintf(&b, "B: %s   (%s)\n\n", r.LabelB, r.ContextB)
+	fmt.Fprintf(&b, "A: %s   [%s] (%s)\n", r.LabelA, r.FormatA, r.ContextA)
+	fmt.Fprintf(&b, "B: %s   [%s] (%s)\n\n", r.LabelB, r.FormatB, r.ContextB)
 
 	// Column widths.
 	catW := len("Category")

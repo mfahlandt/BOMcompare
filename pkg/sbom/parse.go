@@ -32,8 +32,23 @@ type Parsed struct {
 	Relationships  []Relationship
 	DocAnnotations []Annotation
 
-	Raw *Document
+	// Format identifies the source serialization: "spdx-json",
+	// "spdx-tagvalue", "cyclonedx-json" or "cyclonedx-xml".
+	Format string
+
+	// Exactly one of Raw / CycloneDX is set, depending on Format.
+	Raw       *Document
+	CycloneDX *CycloneDXDocument
 }
+
+// Format identifiers returned by DetectFormat and stored on Parsed.Format.
+const (
+	FormatSPDXJSON      = "spdx-json"
+	FormatSPDXTagValue  = "spdx-tagvalue"
+	FormatCycloneDXJSON = "cyclonedx-json"
+	FormatCycloneDXXML  = "cyclonedx-xml"
+	FormatUnknown       = "unknown"
+)
 
 // NormalizedPackage flattens the SPDX fields that matter for quality comparison.
 type NormalizedPackage struct {
@@ -67,28 +82,181 @@ type NormalizedPackage struct {
 	IsStdlib     bool
 }
 
-// Load reads, decodes and normalizes an SPDX JSON file from disk.
+// Load reads a file, auto-detects its SBOM format and returns a normalized
+// Parsed view. Supported formats: SPDX JSON, SPDX tag-value, CycloneDX JSON and
+// CycloneDX XML.
 func Load(path string) (*Parsed, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
-	doc := &Document{}
-	if err := json.Unmarshal(data, doc); err != nil {
-		return nil, fmt.Errorf("parse %s as SPDX JSON: %w", path, err)
+	format := DetectFormat(data)
+	p, err := loadFormat(format, data, path)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
 	}
-	if doc.SPDXVersion == "" {
-		return nil, fmt.Errorf("%s: missing spdxVersion (not an SPDX document?)", path)
-	}
-	p := Normalize(doc)
+	p.Format = format
 	p.FilePath = path
 	return p, nil
 }
 
-// Normalize converts a raw Document into a Parsed view.
+// loadFormat dispatches to the correct parser/normalizer for a detected format.
+func loadFormat(format string, data []byte, path string) (*Parsed, error) {
+	switch format {
+	case FormatSPDXJSON:
+		doc := &Document{}
+		if err := json.Unmarshal(data, doc); err != nil {
+			return nil, fmt.Errorf("parse as SPDX JSON: %w", err)
+		}
+		if doc.SPDXVersion == "" {
+			return nil, fmt.Errorf("missing spdxVersion (not an SPDX document?)")
+		}
+		return Normalize(doc), nil
+	case FormatSPDXTagValue:
+		doc, err := parseSPDXTagValue(data)
+		if err != nil {
+			return nil, err
+		}
+		return Normalize(doc), nil
+	case FormatCycloneDXJSON:
+		doc, err := parseCycloneDXJSON(data)
+		if err != nil {
+			return nil, err
+		}
+		return NormalizeCycloneDX(doc), nil
+	case FormatCycloneDXXML:
+		doc, err := parseCycloneDXXML(data)
+		if err != nil {
+			return nil, err
+		}
+		return NormalizeCycloneDX(doc), nil
+	default:
+		return nil, fmt.Errorf("unrecognized SBOM format (not SPDX JSON/tag-value or CycloneDX JSON/XML)")
+	}
+}
+
+// LoadSPDXJSON parses bytes as SPDX JSON regardless of detection.
+func LoadSPDXJSON(path string) (*Parsed, error) {
+	return loadExplicit(FormatSPDXJSON, path)
+}
+
+// LoadSPDXTagValue parses a file as SPDX tag-value regardless of detection.
+func LoadSPDXTagValue(path string) (*Parsed, error) {
+	return loadExplicit(FormatSPDXTagValue, path)
+}
+
+// LoadCycloneDX parses a file as CycloneDX, auto-selecting JSON vs XML by
+// sniffing the first non-whitespace byte.
+func LoadCycloneDX(path string) (*Parsed, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	format := FormatCycloneDXJSON
+	if b := firstNonSpace(data); b == '<' {
+		format = FormatCycloneDXXML
+	}
+	p, err := loadFormat(format, data, path)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	p.Format = format
+	p.FilePath = path
+	return p, nil
+}
+
+func loadExplicit(format, path string) (*Parsed, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	p, err := loadFormat(format, data, path)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	p.Format = format
+	p.FilePath = path
+	return p, nil
+}
+
+// DetectFormat sniffs SBOM bytes and returns one of the Format* constants.
+//
+// Heuristics (in order):
+//   - leading '<' (after optional BOM / xml prolog) → CycloneDX XML
+//   - leading '{' or '[' → JSON; distinguished by "spdxVersion" (SPDX) vs
+//     "bomFormat"/"specVersion" (CycloneDX)
+//   - presence of "SPDXVersion:" / "PackageName:" lines → SPDX tag-value
+func DetectFormat(data []byte) string {
+	b := firstNonSpace(data)
+	switch b {
+	case '<':
+		return FormatCycloneDXXML
+	case '{', '[':
+		// JSON: decide SPDX vs CycloneDX by key presence. Use a cheap substring
+		// probe on the head to avoid decoding huge files twice.
+		head := data
+		if len(head) > 4096 {
+			head = head[:4096]
+		}
+		hs := string(head)
+		if strings.Contains(hs, "\"spdxVersion\"") {
+			return FormatSPDXJSON
+		}
+		if strings.Contains(hs, "\"bomFormat\"") || strings.Contains(hs, "\"specVersion\"") {
+			return FormatCycloneDXJSON
+		}
+		// Fall back to a full scan of the whole document for the markers.
+		full := string(data)
+		if strings.Contains(full, "\"spdxVersion\"") {
+			return FormatSPDXJSON
+		}
+		if strings.Contains(full, "\"bomFormat\"") || strings.Contains(full, "\"specVersion\"") {
+			return FormatCycloneDXJSON
+		}
+		return FormatUnknown
+	case 0:
+		return FormatUnknown
+	default:
+		// Likely tag-value text. Confirm by looking for an SPDX tag.
+		probe := data
+		if len(probe) > 8192 {
+			probe = probe[:8192]
+		}
+		ps := string(probe)
+		if strings.Contains(ps, "SPDXVersion:") || strings.Contains(ps, "PackageName:") ||
+			strings.Contains(ps, "SPDXID:") || strings.Contains(ps, "DocumentName:") {
+			return FormatSPDXTagValue
+		}
+		return FormatUnknown
+	}
+}
+
+// firstNonSpace returns the first non-whitespace byte, skipping a UTF-8 BOM and
+// an optional XML prolog whitespace. Returns 0 if the input is empty/space-only.
+func firstNonSpace(data []byte) byte {
+	// Skip UTF-8 BOM.
+	if len(data) >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF {
+		data = data[3:]
+	}
+	for _, c := range data {
+		switch c {
+		case ' ', '\t', '\r', '\n':
+			continue
+		default:
+			return c
+		}
+	}
+	return 0
+}
+
+// Normalize converts a raw SPDX Document into a Parsed view. Callers that use
+// Load get Format set for them; when Normalize is called directly the format
+// defaults to SPDX JSON (the only serialization that decodes into Document via
+// JSON).
 func Normalize(doc *Document) *Parsed {
 	p := &Parsed{
 		Raw:            doc,
+		Format:         FormatSPDXJSON,
 		Relationships:  doc.Relationships,
 		DocAnnotations: doc.Annotations,
 		BySPDXID:       make(map[string]*NormalizedPackage, len(doc.Packages)),

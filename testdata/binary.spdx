@@ -1,0 +1,48 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: demo-binary-sbom
+DocumentNamespace: https://example.com/demo/binary-tv
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-1.42.3
+Created: 2026-06-16T16:15:00Z
+LicenseListVersion: 3.20
+
+PackageName: github.com/example/demo
+SPDXID: SPDXRef-Package-mainbin
+PackageVersion: v1.0.0
+PackageDownloadLocation: NOASSERTION
+PackageSupplier: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from go module information: /demo
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:golang/github.com/example/demo@v1.0.0
+
+PackageName: github.com/spf13/cobra
+SPDXID: SPDXRef-Package-cobra
+PackageVersion: v1.8.0
+PackageDownloadLocation: NOASSERTION
+PackageSupplier: NOASSERTION
+FilesAnalyzed: false
+PackageChecksum: SHA256: aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777
+PackageLicenseConcluded: Apache-2.0
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:golang/github.com/spf13/cobra@v1.8.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*
+
+PackageName: stdlib
+SPDXID: SPDXRef-Package-stdlib
+PackageVersion: go1.23.4
+PackageDownloadLocation: NOASSERTION
+PackageSupplier: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseDeclared: NOASSERTION
+PackageComment: <text>Go standard library
+detected from binary</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:golang:go:go1.23.4:*:*:*:*:*:*:*
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-mainbin
+Relationship: SPDXRef-Package-mainbin CONTAINS SPDXRef-Package-cobra
+Relationship: SPDXRef-Package-mainbin CONTAINS SPDXRef-Package-stdlib

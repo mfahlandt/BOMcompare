@@ -1,3 +1,3 @@
-module github.com/mfahlandt/sbom-comparison
+module github.com/seebom-labs/BOMHort/BOMcompare
 
 go 1.23

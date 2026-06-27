@@ -1,4 +1,8 @@
-# sbom-comparison
+# BOMcompare
+
+> Part of **[BOMHort](https://github.com/seebom-labs/BOMHort)** — this tool lives
+> in the BOMHort monorepo under [`BOMcompare`](https://github.com/seebom-labs/BOMHort/tree/main/BOMcompare),
+> which is its upstream. Module path: `github.com/seebom-labs/BOMHort/BOMcompare`.
 
 A single-binary Go CLI that compares two SBOMs — **SPDX** (JSON or tag-value) or
 **CycloneDX** (JSON or XML) — and produces a structured quality diff report:
@@ -65,14 +69,14 @@ Lieberman finding framework, so you can:
 ## Install
 
 ```bash
-go install github.com/mfahlandt/sbom-comparison@latest
+go install github.com/seebom-labs/BOMHort/BOMcompare@latest
 ```
 
-Or build from source:
+This installs a `BOMcompare` binary. Or build from source:
 
 ```bash
-git clone https://github.com/mfahlandt/sbom-comparison
-cd sbom-comparison
+git clone https://github.com/seebom-labs/BOMHort
+cd BOMHort/BOMcompare
 go build -o sbom-comparison .
 ```
 
@@ -208,6 +212,21 @@ go test ./...    # run tests
 gofmt -l .       # formatting (should print nothing)
 ```
 
+### Golden tests
+
+`pkg/report` ships golden tests that pin the full rendered output (markdown,
+JSON and summary) for representative SBOM pairs. When you intentionally change a
+renderer or a scoring heuristic, review the diff and regenerate the fixtures:
+
+```bash
+go test ./pkg/report -run TestGolden -update
+```
+
+The golden files live in `pkg/report/testdata/*.golden`. The volatile
+"Generated <date>" line is normalized before comparison, so the goldens stay
+stable across days.
+
+
 Test fixtures live in `testdata/`:
 
 - `source.spdx.json` — a mikebom-style source SBOM (suppliers, annotations,
@@ -225,7 +244,7 @@ Test fixtures live in `testdata/`:
 ## Project layout
 
 ```
-sbom-comparison/
+BOMcompare/                 # subproject of github.com/seebom-labs/BOMHort
 ├── main.go                 # CLI entry point, flags, exit codes
 ├── pkg/
 │   ├── sbom/               # format detection + parse/normalize
@@ -236,7 +255,7 @@ sbom-comparison/
 │   │   ├── cyclonedx_normalize.go  # CycloneDX → shared model
 │   │   └── parse.go            # Load(), DetectFormat(), normalization
 │   ├── compare/            # comparison engine + finding classification
-│   └── report/             # markdown / json / summary renderers
+│   └── report/             # markdown / json / summary renderers (+ golden tests)
 └── testdata/               # SPDX + CycloneDX fixtures used by tests
 ```
 

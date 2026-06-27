@@ -1,0 +1,330 @@
+{
+  "labelA": "mikebom v0.1.0-alpha.47",
+  "labelB": "syft v1.42.3",
+  "formatA": "spdx-json",
+  "formatB": "spdx-json",
+  "contextA": "source",
+  "contextB": "binary",
+  "contextNote": "mikebom v0.1.0-alpha.47 describes SOURCE (e.g. go.sum/module graph) while syft v1.42.3 describes a BUILT BINARY. A source SBOM lists the full transitive/test dependency set; a binary SBOM lists only what is compiled in. This explains most package-count and coverage differences below.",
+  "completeness": {
+    "totalA": 4,
+    "totalB": 3,
+    "common": 2,
+    "onlyACount": 2,
+    "onlyBCount": 1,
+    "onlyATestScoped": 1,
+    "onlyBTestScoped": 0,
+    "onlyA": [
+      {
+        "name": "github.com/stretchr/testify",
+        "version": "v1.9.0",
+        "purl": "pkg:golang/github.com/stretchr/testify@v1.9.0",
+        "testScope": true
+      },
+      {
+        "name": "gopkg.in/yaml.v3",
+        "version": "v3.0.1",
+        "purl": "pkg:golang/gopkg.in/yaml.v3@v3.0.1"
+      }
+    ],
+    "onlyB": [
+      {
+        "name": "stdlib",
+        "version": "go1.23.4"
+      }
+    ],
+    "starsA": 5,
+    "starsB": 3
+  },
+  "versions": {
+    "commonChecked": 2,
+    "match": 2,
+    "mismatch": 0,
+    "matchRate": 100,
+    "mismatches": null,
+    "starsA": 5,
+    "starsB": 5
+  },
+  "licenses": {
+    "declaredResolvedA": 4,
+    "declaredResolvedB": 0,
+    "concludedResolvedA": 0,
+    "concludedResolvedB": 2,
+    "declaredRateA": 100,
+    "declaredRateB": 0,
+    "concludedRateA": 0,
+    "concludedRateB": 66.66666666666666,
+    "effectiveRateA": 100,
+    "effectiveRateB": 66.66666666666666,
+    "topLicensesA": [
+      {
+        "license": "Apache-2.0",
+        "count": 2
+      },
+      {
+        "license": "MIT",
+        "count": 1
+      },
+      {
+        "license": "MIT AND Apache-2.0",
+        "count": 1
+      }
+    ],
+    "topLicensesB": [
+      {
+        "license": "Apache-2.0",
+        "count": 1
+      },
+      {
+        "license": "BSD-3-Clause",
+        "count": 1
+      }
+    ],
+    "commonChecked": 1,
+    "identical": 1,
+    "differing": 0,
+    "identicalRate": 100,
+    "differences": null,
+    "notes": [
+      "mikebom v0.1.0-alpha.47 populates licenseDeclared but leaves licenseConcluded as NOASSERTION (data present in the declared field).",
+      "syft v1.42.3 populates licenseConcluded directly (declared not used)."
+    ],
+    "starsA": 5,
+    "starsB": 3
+  },
+  "purls": {
+    "withPurlA": 4,
+    "withPurlB": 2,
+    "purlRateA": 100,
+    "purlRateB": 66.66666666666666,
+    "typeDistA": [
+      {
+        "type": "golang",
+        "count": 3
+      },
+      {
+        "type": "generic",
+        "count": 1
+      }
+    ],
+    "typeDistB": [
+      {
+        "type": "golang",
+        "count": 2
+      }
+    ],
+    "zeroVersionA": 0,
+    "zeroVersionB": 0,
+    "qualifiersA": 0,
+    "qualifiersB": 0,
+    "mainModuleA": {
+      "name": "demo",
+      "version": "1.0.0",
+      "purl": "pkg:generic/demo@1.0.0"
+    },
+    "mainModuleB": {
+      "name": "github.com/example/demo",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/github.com/example/demo@v1.0.0"
+    },
+    "mainPurlNote": "mikebom v0.1.0-alpha.47's main module purl is non-specific (pkg:generic/demo@1.0.0) — an ecosystem-typed purl (e.g. pkg:golang/\u003cmodule\u003e) is more actionable for vulnerability matching.",
+    "starsA": 4,
+    "starsB": 3
+  },
+  "cpes": {
+    "totalCpesA": 4,
+    "totalCpesB": 3,
+    "pkgsWithCpeA": 4,
+    "pkgsWithCpeB": 2,
+    "pkgCpeRateA": 100,
+    "pkgCpeRateB": 66.66666666666666,
+    "avgPerPkgA": 1,
+    "avgPerPkgB": 1.5,
+    "wellFormedA": 4,
+    "wellFormedB": 3,
+    "starsA": 5,
+    "starsB": 3
+  },
+  "deps": {
+    "totalA": 4,
+    "totalB": 4,
+    "typeDistA": [
+      {
+        "type": "DEPENDS_ON",
+        "count": 2
+      },
+      {
+        "type": "DESCRIBES",
+        "count": 1
+      },
+      {
+        "type": "TEST_DEPENDENCY_OF",
+        "count": 1
+      }
+    ],
+    "typeDistB": [
+      {
+        "type": "CONTAINS",
+        "count": 2
+      },
+      {
+        "type": "DESCRIBES",
+        "count": 1
+      },
+      {
+        "type": "OTHER",
+        "count": 1
+      }
+    ],
+    "testEdgesA": 1,
+    "testEdgesB": 0,
+    "maxDepthA": 2,
+    "maxDepthB": 1,
+    "hasTestLabelingA": true,
+    "hasTestLabelingB": false,
+    "starsA": 4,
+    "starsB": 2
+  },
+  "suppliers": {
+    "withSupplierA": 4,
+    "withSupplierB": 0,
+    "rateA": 100,
+    "rateB": 0,
+    "starsA": 5,
+    "starsB": 1
+  },
+  "checksums": {
+    "withSha256A": 3,
+    "withSha256B": 1,
+    "rateA": 75,
+    "rateB": 33.33333333333333,
+    "starsA": 3,
+    "starsB": 2
+  },
+  "annotations": {
+    "docLevelA": 2,
+    "docLevelB": 0,
+    "pkgWithAnnA": 4,
+    "pkgWithAnnB": 0,
+    "totalPkgAnnA": 4,
+    "totalPkgAnnB": 0,
+    "fieldsA": [
+      "mikebom:generation-context",
+      "mikebom:graph-completeness",
+      "mikebom:lifecycle-scope",
+      "mikebom:sbom-tier"
+    ],
+    "fieldsB": null,
+    "starsA": 5,
+    "starsB": 1
+  },
+  "findings": [
+    {
+      "type": "MISSING_COMPONENT",
+      "severity": "medium",
+      "side": "A",
+      "package": "stdlib@go1.23.4",
+      "detail": "present in mikebom v0.1.0-alpha.47 but absent here (Go standard library) (main module — may be a purl/identity difference rather than a true omission)"
+    },
+    {
+      "type": "MISSING_COMPONENT",
+      "severity": "medium",
+      "side": "B",
+      "package": "gopkg.in/yaml.v3@v3.0.1",
+      "detail": "present in syft v1.42.3 but absent here"
+    },
+    {
+      "type": "MISSING_COMPONENT",
+      "severity": "low",
+      "side": "B",
+      "package": "github.com/stretchr/testify@v1.9.0",
+      "detail": "present in syft v1.42.3 but absent here (test-scoped dependency)"
+    },
+    {
+      "type": "PURL_MISMATCH",
+      "severity": "low",
+      "side": "both",
+      "package": "demo",
+      "detail": "mikebom v0.1.0-alpha.47: pkg:generic/demo@1.0.0  |  syft v1.42.3: pkg:golang/github.com/example/demo@v1.0.0"
+    },
+    {
+      "type": "LICENSE_GAP",
+      "severity": "medium",
+      "side": "B",
+      "package": "github.com/example/demo@v1.0.0",
+      "detail": "syft v1.42.3 has neither licenseConcluded nor licenseDeclared resolved"
+    }
+  ],
+  "scorecard": [
+    {
+      "category": "Completeness",
+      "weight": "High",
+      "starsA": 5,
+      "starsB": 3,
+      "note": "mikebom v0.1.0-alpha.47 lists 1 more packages (+33%)"
+    },
+    {
+      "category": "Version Accuracy",
+      "weight": "High",
+      "starsA": 5,
+      "starsB": 5,
+      "note": "100% version agreement across 2 common packages"
+    },
+    {
+      "category": "License Coverage",
+      "weight": "Critical (CRA)",
+      "starsA": 5,
+      "starsB": 3,
+      "note": "effective license coverage 100.0% vs 66.7%; declared 100.0%/0.0%, concluded 0.0%/66.7%"
+    },
+    {
+      "category": "Dependency Graph",
+      "weight": "Medium",
+      "starsA": 4,
+      "starsB": 2,
+      "note": "4 vs 4 relationship edges; mikebom v0.1.0-alpha.47 labels test deps"
+    },
+    {
+      "category": "Supplier Attribution",
+      "weight": "Medium",
+      "starsA": 5,
+      "starsB": 1,
+      "note": "supplier coverage 100.0% vs 0.0%"
+    },
+    {
+      "category": "Checksum Coverage",
+      "weight": "Medium",
+      "starsA": 3,
+      "starsB": 2,
+      "note": "SHA256 coverage 75.0% vs 33.3%"
+    },
+    {
+      "category": "PURL Quality",
+      "weight": "Medium",
+      "starsA": 4,
+      "starsB": 3,
+      "note": "main module purl specificity differs"
+    },
+    {
+      "category": "CPE Coverage",
+      "weight": "Low",
+      "starsA": 5,
+      "starsB": 3,
+      "note": "CPE on 100.0% vs 66.7% of packages (avg 1.0 vs 1.5 per pkg)"
+    },
+    {
+      "category": "Annotations/Transparency",
+      "weight": "Low",
+      "starsA": 5,
+      "starsB": 1,
+      "note": "2/0 doc-level, 4 vs 0 packages annotated"
+    }
+  ],
+  "overall": {
+    "scoreA": 4.6,
+    "scoreB": 2.8,
+    "winner": "mikebom v0.1.0-alpha.47",
+    "hasDiff": true,
+    "significant": false
+  }
+}

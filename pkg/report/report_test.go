@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mfahlandt/sbom-comparison/pkg/compare"
-	"github.com/mfahlandt/sbom-comparison/pkg/sbom"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/compare"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/sbom"
 )
 
 func mustLoad(t *testing.T, path string) *sbom.Parsed {

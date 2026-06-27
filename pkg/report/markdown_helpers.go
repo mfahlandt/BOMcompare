@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mfahlandt/sbom-comparison/pkg/compare"
-	"github.com/mfahlandt/sbom-comparison/pkg/sbom"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/compare"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/sbom"
 )
 
 // crossStandard reports whether two detected formats belong to different SBOM

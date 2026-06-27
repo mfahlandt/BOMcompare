@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mfahlandt/sbom-comparison/pkg/compare"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/compare"
 )
 
 // RenderMarkdown renders the full human-readable comparison report, structured

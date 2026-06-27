@@ -1,0 +1,20 @@
+SBOM Comparison Summary
+A: syft v1.42.3   [spdx-json] (binary)
+B: cyclonedx-gomod v1.9.0   [cyclonedx-json] (source)
+
+Category                  Weight   A      B      Winner
+----------------------------------------------------------
+Completeness              High     5/5    5/5    —
+Version Accuracy          High     5/5    5/5    —
+License Coverage          Critic…  3/5    3/5    —
+Dependency Graph          Medium   2/5    2/5    —
+Supplier Attribution      Medium   1/5    3/5    B
+Checksum Coverage         Medium   2/5    2/5    —
+PURL Quality              Medium   3/5    5/5    B
+CPE Coverage              Low      3/5    2/5    A
+Annotations/Transparency  Low      1/5    3/5    B
+----------------------------------------------------------
+OVERALL (weighted)                 3.1    3.6    B
+
+Findings: MISSING_COMPONENT=2  LICENSE_GAP=2
+Differences: true   Significant: false

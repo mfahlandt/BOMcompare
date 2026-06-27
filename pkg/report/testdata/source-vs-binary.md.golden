@@ -1,0 +1,200 @@
+# SBOM Comparison Report
+
+**mikebom v0.1.0-alpha.47** vs **syft v1.42.3**
+
+Formats: **mikebom v0.1.0-alpha.47** = `spdx-json`, **syft v1.42.3** = `spdx-json`.
+
+Methodology inspired by [mlieberman85's SBOM quality benchmark](https://gist.github.com/mlieberman85/cb0ed7b600efb211dce0633e2c392626).
+
+---
+
+## Key Insight: Source SBOM vs Binary SBOM
+
+mikebom v0.1.0-alpha.47 describes SOURCE (e.g. go.sum/module graph) while syft v1.42.3 describes a BUILT BINARY. A source SBOM lists the full transitive/test dependency set; a binary SBOM lists only what is compiled in. This explains most package-count and coverage differences below.
+
+---
+
+## Executive Summary
+
+| Criterion | mikebom v0.1.0-alpha.47 | syft v1.42.3 | Winner |
+|-----------|-----------------------|------------|--------|
+| **Package Count** | 4 | 3 | mikebom v0.1.0-alpha.47 (+33%) |
+| **Common Packages** | 2 | 2 | — |
+| **Version Accuracy** | ✅ 100% match | ✅ 100% match | Tie |
+| **License Coverage** | 100.0% decl / 0.0% concl | 0.0% decl / 66.7% concl | mikebom v0.1.0-alpha.47 |
+| **Dependency Graph** | 4 edges, test-labeled | 4 edges | — |
+| **Supplier Attribution** | 100% | 0% | mikebom v0.1.0-alpha.47 |
+| **CPE Coverage** | 4 (100% pkgs) | 3 (67% pkgs) | mikebom v0.1.0-alpha.47 |
+| **Checksum Coverage** | 3/4 (75.0%) | 1/3 (33.3%) | mikebom v0.1.0-alpha.47 |
+| **Annotations** | 2 doc + 4 pkg | 0 doc + 0 pkg | mikebom v0.1.0-alpha.47 (+4) |
+
+---
+
+## 1. Completeness — Package Coverage
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Total packages | 4 | 3 |
+| Unique to mikebom v0.1.0-alpha.47 | 2 | — |
+| Unique to syft v1.42.3 | — | 1 |
+| Common | 2 | 2 |
+| ↳ of which test-scoped | 1 | 0 |
+
+### Only in syft v1.42.3 (1 packages)
+
+- `stdlib` go1.23.4
+
+### Only in mikebom v0.1.0-alpha.47 (2 packages)
+
+- `github.com/stretchr/testify` v1.9.0 _(test)_
+- `gopkg.in/yaml.v3` v3.0.1
+
+---
+
+## 2. Relationship Coverage — Dependency Graph
+
+| Relationship Type | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|-------------------|-----------------------|------------|
+| CONTAINS | 0 | 2 |
+| DEPENDS_ON | 2 | 0 |
+| DESCRIBES | 1 | 1 |
+| OTHER | 0 | 1 |
+| TEST_DEPENDENCY_OF | 1 | 0 |
+| **Total** | **4** | **4** |
+| Max chain depth | 2 | 1 |
+
+**Note:** mikebom v0.1.0-alpha.47 provides explicit `TEST_DEPENDENCY_OF` labeling; syft v1.42.3 does not.
+
+---
+
+## 3. License Coverage
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| `licenseDeclared` resolved | 4 (100.0%) | 0 (0.0%) |
+| `licenseConcluded` resolved | 0 (0.0%) | 2 (66.7%) |
+| **Effective** (best of either) | **100.0%** | **66.7%** |
+
+- mikebom v0.1.0-alpha.47 populates licenseDeclared but leaves licenseConcluded as NOASSERTION (data present in the declared field).
+- syft v1.42.3 populates licenseConcluded directly (declared not used).
+
+**Top license expressions — mikebom v0.1.0-alpha.47:**
+
+| License | Count |
+|---------|-------|
+| Apache-2.0 | 2 |
+| MIT | 1 |
+| MIT AND Apache-2.0 | 1 |
+
+### License agreement on 1 common packages
+
+- **1/1 (100%)** identical license expression
+- **0/1 (0%)** differ
+
+---
+
+## 4. PURL Quality
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Packages with purl | 4 (100.0%) | 2 (66.7%) |
+| Main module purl | `pkg:generic/demo@1.0.0` | `pkg:golang/github.com/example/demo@v1.0.0` |
+| Zero-version purls | 0 | 0 |
+| PURLs with qualifiers | 0 | 0 |
+
+**PURL type distribution — mikebom v0.1.0-alpha.47:** `golang`=3, `generic`=1
+
+**PURL type distribution — syft v1.42.3:** `golang`=2
+
+**Note:** mikebom v0.1.0-alpha.47's main module purl is non-specific (pkg:generic/demo@1.0.0) — an ecosystem-typed purl (e.g. pkg:golang/<module>) is more actionable for vulnerability matching.
+
+---
+
+## 5. CPE Coverage
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Total CPEs | 4 | 3 |
+| Packages with ≥1 CPE | 4 (100.0%) | 2 (66.7%) |
+| CPEs per package (avg) | 1.0 | 1.5 |
+| Well-formed (NVD-style) | 4 | 3 |
+
+---
+
+## 6. Supplier / Origin Attribution
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Packages with supplier | 4/4 (100.0%) | 0/3 (0.0%) |
+
+---
+
+## 7. Checksum Coverage
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Packages with SHA256 | 3/4 (75.0%) | 1/3 (33.3%) |
+
+---
+
+## 8. Annotations & Transparency
+
+| Metric | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|--------|-----------------------|------------|
+| Document-level annotations | 2 | 0 |
+| Package-level annotations | 4/4 | 0/3 |
+| Distinct annotation fields | 4 | 0 |
+
+**mikebom v0.1.0-alpha.47 annotation fields:** mikebom:generation-context, mikebom:graph-completeness, mikebom:lifecycle-scope, mikebom:sbom-tier
+
+---
+
+## 9. Findings Classification (per Gist Framework)
+
+| Finding Type | mikebom v0.1.0-alpha.47 | syft v1.42.3 | Both | Assessment |
+|-------------|-----------------------|------------|------|------------|
+| **MISSING_COMPONENT** | 1 | 2 | 0 | A more complete |
+| **PHANTOM_COMPONENT** | 0 | 0 | 0 | none |
+| **VERSION_MISMATCH** | 0 | 0 | 0 | none |
+| **PURL_MISMATCH** | 0 | 0 | 1 | purl identity differs |
+| **FALSE_POSITIVE** | 0 | 0 | 0 | none |
+| **LICENSE_GAP** | 0 | 1 | 0 | unresolved licenses |
+
+### Notable findings (medium/high severity)
+
+- **MISSING_COMPONENT** [medium] `stdlib@go1.23.4` — present in mikebom v0.1.0-alpha.47 but absent here (Go standard library) (main module — may be a purl/identity difference rather than a true omission)
+- **MISSING_COMPONENT** [medium] `gopkg.in/yaml.v3@v3.0.1` — present in syft v1.42.3 but absent here
+- **LICENSE_GAP** [medium] `github.com/example/demo@v1.0.0` — syft v1.42.3 has neither licenseConcluded nor licenseDeclared resolved
+
+---
+
+## 10. Summary Scorecard
+
+| Category | Weight | mikebom v0.1.0-alpha.47 | syft v1.42.3 | Notes |
+|----------|--------|-----------------------|------------|-------|
+| Completeness | High | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | mikebom v0.1.0-alpha.47 lists 1 more packages (+33%) |
+| Version Accuracy | High | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 100% version agreement across 2 common packages |
+| License Coverage | Critical (CRA) | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | effective license coverage 100.0% vs 66.7%; declared 100.0%/0.0%, concluded 0.0%/66.7% |
+| Dependency Graph | Medium | ⭐⭐⭐⭐ | ⭐⭐ | 4 vs 4 relationship edges; mikebom v0.1.0-alpha.47 labels test deps |
+| Supplier Attribution | Medium | ⭐⭐⭐⭐⭐ | ⭐ | supplier coverage 100.0% vs 0.0% |
+| Checksum Coverage | Medium | ⭐⭐⭐ | ⭐⭐ | SHA256 coverage 75.0% vs 33.3% |
+| PURL Quality | Medium | ⭐⭐⭐⭐ | ⭐⭐⭐ | main module purl specificity differs |
+| CPE Coverage | Low | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | CPE on 100.0% vs 66.7% of packages (avg 1.0 vs 1.5 per pkg) |
+| Annotations/Transparency | Low | ⭐⭐⭐⭐⭐ | ⭐ | 2/0 doc-level, 4 vs 0 packages annotated |
+
+**Weighted composite:** mikebom v0.1.0-alpha.47 **4.6 / 5.0**  ·  syft v1.42.3 **2.8 / 5.0**  →  Winner: **mikebom v0.1.0-alpha.47**
+
+---
+
+## Recommendations
+
+1. **mikebom v0.1.0-alpha.47 should populate `licenseConcluded`.** Licenses are resolved in `licenseDeclared` (100.0%) but `licenseConcluded` is NOASSERTION for every package — most SBOM consumers and compliance tools read concluded, not declared.
+2. **Use an ecosystem-typed main module purl.** mikebom v0.1.0-alpha.47's main module purl is non-specific (pkg:generic/demo@1.0.0) — an ecosystem-typed purl (e.g. pkg:golang/<module>) is more actionable for vulnerability matching.
+3. **syft v1.42.3 should add supplier attribution** (currently 0%).
+4. **syft v1.42.3 should classify test vs runtime dependencies** (`TEST_DEPENDENCY_OF`), as mikebom v0.1.0-alpha.47 does — crucial context for vulnerability triage.
+5. **syft v1.42.3 provides no annotations** while mikebom v0.1.0-alpha.47 annotates 4 packages.
+6. **Source vs binary is a use-case choice, not a defect.** The source SBOM is better for CRA compliance and vulnerability coverage (full dependency tree); the binary SBOM is better for runtime/attack-surface analysis. Pick per use case rather than treating the package delta as an error.
+
+---
+
+*Generated <DATE> by sbom-comparison — mikebom v0.1.0-alpha.47 vs syft v1.42.3*

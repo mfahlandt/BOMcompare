@@ -1,0 +1,20 @@
+SBOM Comparison Summary
+A: mikebom v0.1.0-alpha.47   [spdx-json] (source)
+B: syft v1.42.3   [spdx-json] (binary)
+
+Category                  Weight   A      B      Winner
+----------------------------------------------------------
+Completeness              High     5/5    3/5    A
+Version Accuracy          High     5/5    5/5    —
+License Coverage          Critic…  5/5    3/5    A
+Dependency Graph          Medium   4/5    2/5    A
+Supplier Attribution      Medium   5/5    1/5    A
+Checksum Coverage         Medium   3/5    2/5    A
+PURL Quality              Medium   4/5    3/5    A
+CPE Coverage              Low      5/5    3/5    A
+Annotations/Transparency  Low      5/5    1/5    A
+----------------------------------------------------------
+OVERALL (weighted)                 4.6    2.8    A
+
+Findings: MISSING_COMPONENT=3  PURL_MISMATCH=1  LICENSE_GAP=1
+Differences: true   Significant: false

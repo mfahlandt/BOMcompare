@@ -5,7 +5,7 @@
 package compare
 
 import (
-	"github.com/mfahlandt/sbom-comparison/pkg/sbom"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/sbom"
 )
 
 // Report is the full structured comparison result. It is rendered by the report
@@ -178,8 +178,9 @@ func buildSets(a, b *sbom.Parsed) *Sets {
 	matchedB := make(map[string]bool, len(b.Packages))
 	for i := range a.Packages {
 		pa := &a.Packages[i]
-		pb := findMatch(pa, s.byKeyB, s.looseB, s.identB, matchedB)
-		if pb != nil && !matchedB[pb.SPDXID] {
+		// findMatch never returns an already-claimed B, so the result is always
+		// safe to pair here.
+		if pb := findMatch(pa, s.byKeyB, s.looseB, s.identB, matchedB); pb != nil {
 			s.Common = append(s.Common, PackagePair{Key: matchKey(pa), A: pa, B: pb})
 			matchedB[pb.SPDXID] = true
 		} else {
@@ -249,14 +250,18 @@ func identityKeys(p *sbom.NormalizedPackage) []string {
 // keys are tried first; a version-independent identity match is the last resort
 // (so same-package/different-version becomes a comparable pair, not two
 // missing components).
+//
+// A B-package that another A-package has already claimed (matchedB) is never
+// returned, so each B is paired at most once and a collision falls through to a
+// looser, still-unclaimed candidate instead of being misreported as missing.
 func findMatch(pa *sbom.NormalizedPackage, byKeyB, looseB, identB map[string]*sbom.NormalizedPackage, matchedB map[string]bool) *sbom.NormalizedPackage {
 	// 1) exact canonical key (module/name + version).
-	if pb, ok := byKeyB[matchKey(pa)]; ok {
+	if pb, ok := byKeyB[matchKey(pa)]; ok && !matchedB[pb.SPDXID] {
 		return pb
 	}
 	// 2) relaxed version-aware keys (name+version, last-segment+version).
 	for _, k := range looseKeys(pa) {
-		if pb, ok := looseB[k]; ok {
+		if pb, ok := looseB[k]; ok && !matchedB[pb.SPDXID] {
 			return pb
 		}
 	}

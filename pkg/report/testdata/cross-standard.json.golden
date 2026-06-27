@@ -1,0 +1,300 @@
+{
+  "labelA": "syft v1.42.3",
+  "labelB": "cyclonedx-gomod v1.9.0",
+  "formatA": "spdx-json",
+  "formatB": "cyclonedx-json",
+  "contextA": "binary",
+  "contextB": "source",
+  "contextNote": "cyclonedx-gomod v1.9.0 describes SOURCE (e.g. go.sum/module graph) while syft v1.42.3 describes a BUILT BINARY. A source SBOM lists the full transitive/test dependency set; a binary SBOM lists only what is compiled in. This explains most package-count and coverage differences below.",
+  "completeness": {
+    "totalA": 3,
+    "totalB": 3,
+    "common": 2,
+    "onlyACount": 1,
+    "onlyBCount": 1,
+    "onlyATestScoped": 0,
+    "onlyBTestScoped": 1,
+    "onlyA": [
+      {
+        "name": "stdlib",
+        "version": "go1.23.4"
+      }
+    ],
+    "onlyB": [
+      {
+        "name": "github.com/stretchr/testify",
+        "version": "v1.9.0",
+        "purl": "pkg:golang/github.com/stretchr/testify@v1.9.0",
+        "testScope": true
+      }
+    ],
+    "starsA": 5,
+    "starsB": 5
+  },
+  "versions": {
+    "commonChecked": 2,
+    "match": 2,
+    "mismatch": 0,
+    "matchRate": 100,
+    "mismatches": null,
+    "starsA": 5,
+    "starsB": 5
+  },
+  "licenses": {
+    "declaredResolvedA": 0,
+    "declaredResolvedB": 0,
+    "concludedResolvedA": 2,
+    "concludedResolvedB": 2,
+    "declaredRateA": 0,
+    "declaredRateB": 0,
+    "concludedRateA": 66.66666666666666,
+    "concludedRateB": 66.66666666666666,
+    "effectiveRateA": 66.66666666666666,
+    "effectiveRateB": 66.66666666666666,
+    "topLicensesA": [
+      {
+        "license": "Apache-2.0",
+        "count": 1
+      },
+      {
+        "license": "BSD-3-Clause",
+        "count": 1
+      }
+    ],
+    "topLicensesB": [
+      {
+        "license": "Apache-2.0",
+        "count": 1
+      },
+      {
+        "license": "MIT",
+        "count": 1
+      }
+    ],
+    "commonChecked": 1,
+    "identical": 1,
+    "differing": 0,
+    "identicalRate": 100,
+    "differences": null,
+    "notes": [
+      "syft v1.42.3 populates licenseConcluded directly (declared not used).",
+      "cyclonedx-gomod v1.9.0 populates licenseConcluded directly (declared not used)."
+    ],
+    "starsA": 3,
+    "starsB": 3
+  },
+  "purls": {
+    "withPurlA": 2,
+    "withPurlB": 3,
+    "purlRateA": 66.66666666666666,
+    "purlRateB": 100,
+    "typeDistA": [
+      {
+        "type": "golang",
+        "count": 2
+      }
+    ],
+    "typeDistB": [
+      {
+        "type": "golang",
+        "count": 3
+      }
+    ],
+    "zeroVersionA": 0,
+    "zeroVersionB": 0,
+    "qualifiersA": 0,
+    "qualifiersB": 0,
+    "mainModuleA": {
+      "name": "github.com/example/demo",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/github.com/example/demo@v1.0.0"
+    },
+    "mainModuleB": {
+      "name": "github.com/example/demo",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/github.com/example/demo@v1.0.0"
+    },
+    "starsA": 3,
+    "starsB": 5
+  },
+  "cpes": {
+    "totalCpesA": 3,
+    "totalCpesB": 1,
+    "pkgsWithCpeA": 2,
+    "pkgsWithCpeB": 1,
+    "pkgCpeRateA": 66.66666666666666,
+    "pkgCpeRateB": 33.33333333333333,
+    "avgPerPkgA": 1.5,
+    "avgPerPkgB": 1,
+    "wellFormedA": 3,
+    "wellFormedB": 1,
+    "starsA": 3,
+    "starsB": 2
+  },
+  "deps": {
+    "totalA": 4,
+    "totalB": 3,
+    "typeDistA": [
+      {
+        "type": "CONTAINS",
+        "count": 2
+      },
+      {
+        "type": "DESCRIBES",
+        "count": 1
+      },
+      {
+        "type": "OTHER",
+        "count": 1
+      }
+    ],
+    "typeDistB": [
+      {
+        "type": "DEPENDS_ON",
+        "count": 2
+      },
+      {
+        "type": "DESCRIBES",
+        "count": 1
+      }
+    ],
+    "testEdgesA": 0,
+    "testEdgesB": 0,
+    "maxDepthA": 1,
+    "maxDepthB": 1,
+    "hasTestLabelingA": false,
+    "hasTestLabelingB": false,
+    "starsA": 2,
+    "starsB": 2
+  },
+  "suppliers": {
+    "withSupplierA": 0,
+    "withSupplierB": 2,
+    "rateA": 0,
+    "rateB": 66.66666666666666,
+    "starsA": 1,
+    "starsB": 3
+  },
+  "checksums": {
+    "withSha256A": 1,
+    "withSha256B": 1,
+    "rateA": 33.33333333333333,
+    "rateB": 33.33333333333333,
+    "starsA": 2,
+    "starsB": 2
+  },
+  "annotations": {
+    "docLevelA": 0,
+    "docLevelB": 1,
+    "pkgWithAnnA": 0,
+    "pkgWithAnnB": 1,
+    "totalPkgAnnA": 0,
+    "totalPkgAnnB": 1,
+    "fieldsA": null,
+    "fieldsB": null,
+    "starsA": 1,
+    "starsB": 3
+  },
+  "findings": [
+    {
+      "type": "MISSING_COMPONENT",
+      "severity": "low",
+      "side": "A",
+      "package": "github.com/stretchr/testify@v1.9.0",
+      "detail": "present in syft v1.42.3 but absent here (test-scoped dependency)"
+    },
+    {
+      "type": "MISSING_COMPONENT",
+      "severity": "medium",
+      "side": "B",
+      "package": "stdlib@go1.23.4",
+      "detail": "present in cyclonedx-gomod v1.9.0 but absent here (Go standard library) (main module — may be a purl/identity difference rather than a true omission)"
+    },
+    {
+      "type": "LICENSE_GAP",
+      "severity": "medium",
+      "side": "A",
+      "package": "github.com/example/demo@v1.0.0",
+      "detail": "syft v1.42.3 has neither licenseConcluded nor licenseDeclared resolved"
+    },
+    {
+      "type": "LICENSE_GAP",
+      "severity": "medium",
+      "side": "B",
+      "package": "github.com/example/demo@v1.0.0",
+      "detail": "cyclonedx-gomod v1.9.0 has neither licenseConcluded nor licenseDeclared resolved"
+    }
+  ],
+  "scorecard": [
+    {
+      "category": "Completeness",
+      "weight": "High",
+      "starsA": 5,
+      "starsB": 5,
+      "note": "both list the same number of packages"
+    },
+    {
+      "category": "Version Accuracy",
+      "weight": "High",
+      "starsA": 5,
+      "starsB": 5,
+      "note": "100% version agreement across 2 common packages"
+    },
+    {
+      "category": "License Coverage",
+      "weight": "Critical (CRA)",
+      "starsA": 3,
+      "starsB": 3,
+      "note": "effective license coverage 66.7% vs 66.7%; declared 0.0%/0.0%, concluded 66.7%/66.7%"
+    },
+    {
+      "category": "Dependency Graph",
+      "weight": "Medium",
+      "starsA": 2,
+      "starsB": 2,
+      "note": "4 vs 3 relationship edges"
+    },
+    {
+      "category": "Supplier Attribution",
+      "weight": "Medium",
+      "starsA": 1,
+      "starsB": 3,
+      "note": "supplier coverage 0.0% vs 66.7%"
+    },
+    {
+      "category": "Checksum Coverage",
+      "weight": "Medium",
+      "starsA": 2,
+      "starsB": 2,
+      "note": "SHA256 coverage 33.3% vs 33.3%"
+    },
+    {
+      "category": "PURL Quality",
+      "weight": "Medium",
+      "starsA": 3,
+      "starsB": 5,
+      "note": "purl coverage 66.7% vs 100.0%"
+    },
+    {
+      "category": "CPE Coverage",
+      "weight": "Low",
+      "starsA": 3,
+      "starsB": 2,
+      "note": "CPE on 66.7% vs 33.3% of packages (avg 1.5 vs 1.0 per pkg)"
+    },
+    {
+      "category": "Annotations/Transparency",
+      "weight": "Low",
+      "starsA": 1,
+      "starsB": 3,
+      "note": "0/1 doc-level, 0 vs 1 packages annotated"
+    }
+  ],
+  "overall": {
+    "scoreA": 3.1,
+    "scoreB": 3.6,
+    "winner": "cyclonedx-gomod v1.9.0",
+    "hasDiff": true,
+    "significant": false
+  }
+}

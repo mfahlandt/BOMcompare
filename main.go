@@ -11,12 +11,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
-	"github.com/mfahlandt/sbom-comparison/pkg/compare"
-	"github.com/mfahlandt/sbom-comparison/pkg/report"
-	"github.com/mfahlandt/sbom-comparison/pkg/sbom"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/compare"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/report"
+	"github.com/seebom-labs/BOMHort/BOMcompare/pkg/sbom"
 )
 
 // version is overridable at build time via -ldflags "-X main.version=...".
@@ -26,7 +27,7 @@ func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(args []string, stdout, stderr *os.File) int {
+func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("sbom-comparison", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 

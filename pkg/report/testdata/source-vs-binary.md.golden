@@ -162,8 +162,7 @@ mikebom v0.1.0-alpha.47 describes SOURCE (e.g. go.sum/module graph) while syft v
 
 ### Notable findings (medium/high severity)
 
-- **MISSING_COMPONENT** [medium] `stdlib@go1.23.4` — present in mikebom v0.1.0-alpha.47 but absent here (Go standard library) (main module — may be a purl/identity difference rather than a true omission)
-- **MISSING_COMPONENT** [medium] `gopkg.in/yaml.v3@v3.0.1` — present in syft v1.42.3 but absent here
+- **MISSING_COMPONENT** [medium] `stdlib@go1.23.4` — present in syft v1.42.3 but absent here (Go standard library)
 - **LICENSE_GAP** [medium] `github.com/example/demo@v1.0.0` — syft v1.42.3 has neither licenseConcluded nor licenseDeclared resolved
 
 ---
@@ -186,6 +185,33 @@ mikebom v0.1.0-alpha.47 describes SOURCE (e.g. go.sum/module graph) while syft v
 
 ---
 
+## 11. Compliance — CISA 2026 Minimum Elements for a Software Bill of Materials
+
+Informational; not part of the weighted scorecard. `warn` = covered only by a declared unknown (NOASSERTION); `unverified` = cannot be judged from the document alone.
+
+| Element | Scope | mikebom v0.1.0-alpha.47 | syft v1.42.3 |
+|---------|-------|-----------------------|------------|
+| SBOM Author | document | ✅ mikebom contributors | ✅ Anchore, Inc |
+| Author Signature | document | ❔ not signed in-document | ❔ not signed in-document |
+| Data Format Name | document | ✅ SPDX | ✅ SPDX |
+| Data Format Version | document | ✅ SPDX-2.3 | ✅ SPDX-2.3 |
+| Generation Context | document | ❌ not declared (inferred: source) | ❌ not declared (inferred: binary) |
+| Timestamp | document | ✅ 2026-06-16T16:02:16Z | ✅ 2026-06-16T16:05:00Z |
+| Tool Name | document | ✅ mikebom-0.1.0-alpha.47 | ✅ syft-1.42.3 |
+| Tool Version | document | ✅ mikebom-0.1.0-alpha.47 | ✅ syft-1.42.3 |
+| SBOM Version | document | ✅ https://example.com/demo/source | ✅ https://example.com/demo/binary |
+| Component Producer | component | ✅ 4/4 (100.0%) | ⚠️ 0/3 (0.0%), 3 unknown |
+| Component Name | component | ✅ 4/4 (100.0%) | ✅ 3/3 (100.0%) |
+| Component Version | component | ✅ 4/4 (100.0%) | ✅ 3/3 (100.0%) |
+| Software Identifiers | component | ✅ 4/4 (100.0%) | ✅ 3/3 (100.0%) |
+| Component Hash (value + algorithm) | component | ❌ 3/4 (75.0%) | ❌ 1/3 (33.3%) |
+| License | component | ✅ 4/4 (100.0%) | ⚠️ 2/3 (66.7%), 1 unknown |
+| Dependency Relationship | component | ✅ 4/4 (100.0%) | ✅ 3/3 (100.0%) |
+
+**Elements fully met:** mikebom v0.1.0-alpha.47 **13/16**  ·  syft v1.42.3 **11/16**
+
+---
+
 ## Recommendations
 
 1. **mikebom v0.1.0-alpha.47 should populate `licenseConcluded`.** Licenses are resolved in `licenseDeclared` (100.0%) but `licenseConcluded` is NOASSERTION for every package — most SBOM consumers and compliance tools read concluded, not declared.
@@ -194,6 +220,8 @@ mikebom v0.1.0-alpha.47 describes SOURCE (e.g. go.sum/module graph) while syft v
 4. **syft v1.42.3 should classify test vs runtime dependencies** (`TEST_DEPENDENCY_OF`), as mikebom v0.1.0-alpha.47 does — crucial context for vulnerability triage.
 5. **syft v1.42.3 provides no annotations** while mikebom v0.1.0-alpha.47 annotates 4 packages.
 6. **Source vs binary is a use-case choice, not a defect.** The source SBOM is better for CRA compliance and vulnerability coverage (full dependency tree); the binary SBOM is better for runtime/attack-surface analysis. Pick per use case rather than treating the package delta as an error.
+7. **mikebom v0.1.0-alpha.47 misses CISA 2026 minimum elements:** Generation Context, Component Hash (value + algorithm).
+8. **syft v1.42.3 misses CISA 2026 minimum elements:** Generation Context, Component Hash (value + algorithm).
 
 ---
 

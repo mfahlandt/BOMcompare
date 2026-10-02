@@ -1,8 +1,8 @@
 // Package sbom: CycloneDX JSON/XML document types.
 //
 // Only the fields relevant to SBOM quality comparison are modeled. CycloneDX
-// v1.4 and v1.5 share enough structure that a single set of permissive types
-// covers both; version-specific shapes (e.g. cpe/licenses that may be string or
+// v1.4 through v1.7 share enough structure that a single set of permissive
+// types covers them; version-specific shapes (e.g. cpe/licenses that may be string or
 // array) are decoded via json.RawMessage and resolved during normalization.
 package sbom
 
@@ -22,6 +22,9 @@ type CycloneDXDocument struct {
 	Dependencies []CDXDependency  `json:"dependencies" xml:"dependencies>dependency"`
 	Annotations  []CDXAnnotation  `json:"annotations" xml:"annotations>annotation"`
 	Compositions []CDXComposition `json:"compositions" xml:"compositions>composition"`
+	// Signature is the enveloped JSF signature (JSON) or a marker for an
+	// enveloped XML-DSig <Signature> element (XML).
+	Signature json.RawMessage `json:"signature" xml:"-"`
 }
 
 // CDXMetadata holds BOM-level provenance and the primary component.
@@ -30,6 +33,26 @@ type CDXMetadata struct {
 	Tools     CDXToolsField `json:"tools" xml:"tools"`
 	Component *CDXComponent `json:"component" xml:"component"`
 	Supplier  *CDXOrg       `json:"supplier" xml:"supplier"`
+	// v1.5+: lifecycle phases the BOM was captured in (SBOM generation context).
+	Lifecycles []CDXLifecycle `json:"lifecycles" xml:"-"`
+	// BOM authorship: authors (v1.2+), manufacturer (v1.6+) and its deprecated
+	// v1.5 spelling manufacture.
+	Authors      []CDXContact `json:"authors" xml:"-"`
+	Manufacturer *CDXOrg      `json:"manufacturer" xml:"-"`
+	Manufacture  *CDXOrg      `json:"manufacture" xml:"-"`
+}
+
+// CDXLifecycle is either a pre-defined phase ("pre-build", "post-build", ...)
+// or a custom named lifecycle.
+type CDXLifecycle struct {
+	Phase string `json:"phase"`
+	Name  string `json:"name"`
+}
+
+// CDXContact is an individual (author) reference.
+type CDXContact struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 // CDXToolsField tolerates both CycloneDX shapes for `tools`:
@@ -74,23 +97,29 @@ type CDXTool struct {
 
 // CDXComponent is a CycloneDX component (the analog of an SPDX package).
 type CDXComponent struct {
-	Type       string          `json:"type" xml:"type,attr"`
-	BOMRef     string          `json:"bom-ref" xml:"bom-ref,attr"`
-	Name       string          `json:"name" xml:"name"`
-	Version    string          `json:"version" xml:"version"`
-	Group      string          `json:"group" xml:"group"`
-	PURL       string          `json:"purl" xml:"purl"`
-	CPE        json.RawMessage `json:"cpe" xml:"-"`
-	CPEXML     string          `json:"-" xml:"cpe"`
-	Scope      string          `json:"scope" xml:"scope"`
-	Supplier   *CDXOrg         `json:"supplier" xml:"supplier"`
-	Publisher  string          `json:"publisher" xml:"publisher"`
-	Author     string          `json:"author" xml:"author"`
-	Hashes     []CDXHash       `json:"hashes" xml:"hashes>hash"`
-	Licenses   []CDXLicense    `json:"licenses" xml:"licenses>license"`
-	Evidence   *CDXEvidence    `json:"evidence" xml:"evidence"`
-	Properties []CDXProperty   `json:"properties" xml:"properties>property"`
-	Components []CDXComponent  `json:"components" xml:"components>component"`
+	Type      string          `json:"type" xml:"type,attr"`
+	BOMRef    string          `json:"bom-ref" xml:"bom-ref,attr"`
+	Name      string          `json:"name" xml:"name"`
+	Version   string          `json:"version" xml:"version"`
+	Group     string          `json:"group" xml:"group"`
+	PURL      string          `json:"purl" xml:"purl"`
+	CPE       json.RawMessage `json:"cpe" xml:"-"`
+	CPEXML    string          `json:"-" xml:"cpe"`
+	Scope     string          `json:"scope" xml:"scope"`
+	Supplier  *CDXOrg         `json:"supplier" xml:"supplier"`
+	Publisher string          `json:"publisher" xml:"publisher"`
+	Author    string          `json:"author" xml:"author"`
+	// v1.6+: the component's creator, as organization and/or individuals.
+	Manufacturer *CDXOrg      `json:"manufacturer" xml:"-"`
+	Authors      []CDXContact `json:"authors" xml:"-"`
+	// v1.6+: intrinsic identifiers (OmniBOR gitoid, Software Heritage).
+	OmniborID  []string       `json:"omniborId" xml:"-"`
+	SWHID      []string       `json:"swhid" xml:"-"`
+	Hashes     []CDXHash      `json:"hashes" xml:"hashes>hash"`
+	Licenses   []CDXLicense   `json:"licenses" xml:"licenses>license"`
+	Evidence   *CDXEvidence   `json:"evidence" xml:"evidence"`
+	Properties []CDXProperty  `json:"properties" xml:"properties>property"`
+	Components []CDXComponent `json:"components" xml:"components>component"`
 }
 
 // CDXOrg is an organizational reference (supplier/manufacturer).
@@ -110,12 +139,17 @@ type CDXHash struct {
 type CDXLicense struct {
 	License    *CDXLicenseChoice `json:"license" xml:"license"`
 	Expression string            `json:"expression" xml:"expression"`
+	// Acknowledgement (v1.6+) applies to the expression form: "declared" or
+	// "concluded".
+	Acknowledgement string `json:"acknowledgement" xml:"-"`
 }
 
 // CDXLicenseChoice carries either an SPDX id or a free-text name.
 type CDXLicenseChoice struct {
 	ID   string `json:"id" xml:"id"`
 	Name string `json:"name" xml:"name"`
+	// Acknowledgement (v1.6+): "declared" or "concluded".
+	Acknowledgement string `json:"acknowledgement" xml:"-"`
 }
 
 // CDXEvidence holds identity/quality evidence. The `identity` field may be a
@@ -185,22 +219,54 @@ func (c *CDXComponent) cdxResolveCPE() []string {
 	return nil
 }
 
-// cdxLicenseExpr resolves the first usable license expression from a component.
-func cdxLicenseExpr(lics []CDXLicense) string {
-	for _, l := range lics {
-		if l.Expression != "" {
-			return l.Expression
+// cdxLicenseValue returns the expression / id / name of one license entry and
+// its lower-cased acknowledgement ("declared", "concluded" or "").
+func cdxLicenseValue(l CDXLicense) (value, ack string) {
+	if l.Expression != "" {
+		return l.Expression, strings.ToLower(strings.TrimSpace(l.Acknowledgement))
+	}
+	if l.License != nil {
+		ack = strings.ToLower(strings.TrimSpace(l.License.Acknowledgement))
+		if l.License.ID != "" {
+			return l.License.ID, ack
 		}
-		if l.License != nil {
-			if l.License.ID != "" {
-				return l.License.ID
+		if l.License.Name != "" {
+			return l.License.Name, ack
+		}
+	}
+	return "", ""
+}
+
+// cdxLicenses splits a component's licenses into declared and concluded using
+// the CycloneDX 1.6+ acknowledgement. Entries without an acknowledgement (all
+// pre-1.6 BOMs) fill the concluded slot, since CycloneDX historically had a
+// single license notion and concluded is what most consumers read.
+func cdxLicenses(lics []CDXLicense) (declared, concluded string) {
+	var unspecified string
+	for _, l := range lics {
+		v, ack := cdxLicenseValue(l)
+		if v == "" {
+			continue
+		}
+		switch ack {
+		case "declared":
+			if declared == "" {
+				declared = v
 			}
-			if l.License.Name != "" {
-				return l.License.Name
+		case "concluded":
+			if concluded == "" {
+				concluded = v
+			}
+		default:
+			if unspecified == "" {
+				unspecified = v
 			}
 		}
 	}
-	return ""
+	if concluded == "" {
+		concluded = unspecified
+	}
+	return declared, concluded
 }
 
 // cdxSupplierName resolves a display supplier from supplier/publisher/author.
@@ -213,6 +279,20 @@ func cdxSupplierName(c *CDXComponent) string {
 	}
 	if c.Author != "" {
 		return c.Author
+	}
+	return ""
+}
+
+// cdxProducerName resolves the component creator from the v1.6+ manufacturer
+// or authors fields (the analog of SPDX's originator).
+func cdxProducerName(c *CDXComponent) string {
+	if c.Manufacturer != nil && c.Manufacturer.Name != "" {
+		return c.Manufacturer.Name
+	}
+	for _, a := range c.Authors {
+		if a.Name != "" {
+			return a.Name
+		}
 	}
 	return ""
 }

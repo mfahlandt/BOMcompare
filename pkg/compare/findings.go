@@ -44,12 +44,13 @@ func classifyFindings(r *Report, s *Sets) []Finding {
 	var out []Finding
 
 	// MISSING_COMPONENT: packages present in one SBOM but not the other. We treat
-	// runtime-scoped uniques as more severe than test-scoped ones.
+	// runtime-scoped uniques as more severe than test-scoped ones. The label and
+	// context passed are those of the SBOM the package IS present in.
 	for _, p := range s.OnlyB {
-		out = append(out, missingFinding(p, "A", r.LabelA, r.ContextA))
+		out = append(out, missingFinding(p, "A", r.LabelB, r.ContextB))
 	}
 	for _, p := range s.OnlyA {
-		out = append(out, missingFinding(p, "B", r.LabelB, r.ContextB))
+		out = append(out, missingFinding(p, "B", r.LabelA, r.ContextA))
 	}
 
 	// VERSION_MISMATCH: same package, different version.

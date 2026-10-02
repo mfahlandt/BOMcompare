@@ -58,6 +58,10 @@ func TestGolden(t *testing.T) {
 		// Version mismatch (exercises VERSION_MISMATCH rendering + gating).
 		{"version-mismatch/markdown", "source-version-mismatch.spdx.json", "binary.spdx.json", FormatMarkdown, "version-mismatch.md.golden"},
 		{"version-mismatch/summary", "source-version-mismatch.spdx.json", "binary.spdx.json", FormatSummary, "version-mismatch.summary.golden"},
+
+		// SPDX 3.0 JSON-LD source SBOM vs CycloneDX XML binary SBOM.
+		{"spdx3-vs-cdx-xml/markdown", "source.spdx3.json", "binary.cdx.xml", FormatMarkdown, "spdx3-vs-cdx-xml.md.golden"},
+		{"spdx3-vs-cdx-xml/summary", "source.spdx3.json", "binary.cdx.xml", FormatSummary, "spdx3-vs-cdx-xml.summary.golden"},
 	}
 
 	for _, c := range cases {

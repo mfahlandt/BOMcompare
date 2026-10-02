@@ -18,7 +18,7 @@ func crossStandard(fa, fb string) bool {
 
 func standardOf(format string) string {
 	switch format {
-	case sbom.FormatSPDXJSON, sbom.FormatSPDXTagValue:
+	case sbom.FormatSPDXJSON, sbom.FormatSPDXTagValue, sbom.FormatSPDX3JSONLD:
 		return "spdx"
 	case sbom.FormatCycloneDXJSON, sbom.FormatCycloneDXXML:
 		return "cyclonedx"
@@ -77,6 +77,24 @@ func buildRecommendations(r *compare.Report) []string {
 		}
 	} else {
 		recs = append(recs, "**Source vs binary is a use-case choice, not a defect.** The source SBOM is better for CRA compliance and vulnerability coverage (full dependency tree); the binary SBOM is better for runtime/attack-surface analysis. Pick per use case rather than treating the package delta as an error.")
+	}
+
+	for _, side := range []struct {
+		label string
+		pick  func(compare.MinElementRow) compare.MinElementResult
+	}{
+		{r.LabelA, func(row compare.MinElementRow) compare.MinElementResult { return row.A }},
+		{r.LabelB, func(row compare.MinElementRow) compare.MinElementResult { return row.B }},
+	} {
+		var missing []string
+		for _, row := range r.MinimumElements.Rows {
+			if side.pick(row).Status == compare.MinFail {
+				missing = append(missing, row.Element)
+			}
+		}
+		if len(missing) > 0 {
+			recs = append(recs, fmt.Sprintf("**%s misses CISA 2026 minimum elements:** %s.", side.label, strings.Join(missing, ", ")))
+		}
 	}
 
 	if r.Versions.Mismatch > 0 {

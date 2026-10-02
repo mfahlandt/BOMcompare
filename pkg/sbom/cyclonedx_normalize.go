@@ -55,8 +55,84 @@ func NormalizeCycloneDX(doc *CycloneDXDocument) *Parsed {
 	// Document-level annotations.
 	p.DocAnnotations = cdxDocAnnotations(doc)
 
+	p.Meta = cdxDocMeta(doc)
 	p.Context = detectContextCDX(doc, p)
 	return p
+}
+
+// cdxDocMeta extracts document metadata (spec version, timestamp, authors,
+// tools, lifecycle) from a CycloneDX BOM.
+func cdxDocMeta(doc *CycloneDXDocument) DocMeta {
+	m := DocMeta{DependencyDeclared: map[string]bool{}}
+	m.Signed = len(doc.Signature) > 0 && string(doc.Signature) != "null"
+	if doc.SpecVersion != "" {
+		m.SpecVersion = "CycloneDX-" + doc.SpecVersion
+	}
+	if doc.SerialNumber != "" || doc.Version > 0 {
+		m.DocVersion = fmt.Sprintf("%s#%d", doc.SerialNumber, doc.Version)
+	}
+	for _, d := range doc.Dependencies {
+		if d.Ref != "" {
+			m.DependencyDeclared[d.Ref] = true
+		}
+	}
+	md := doc.Metadata
+	if md == nil {
+		return m
+	}
+	m.Created = md.Timestamp
+	for _, a := range md.Authors {
+		if a.Name != "" {
+			m.Authors = append(m.Authors, a.Name)
+		} else if a.Email != "" {
+			m.Authors = append(m.Authors, a.Email)
+		}
+	}
+	for _, org := range []*CDXOrg{md.Manufacturer, md.Manufacture, md.Supplier} {
+		if org != nil && org.Name != "" && !containsStr(m.Authors, org.Name) {
+			m.Authors = append(m.Authors, org.Name)
+		}
+	}
+	addTool := func(name, version string) {
+		if name == "" {
+			return
+		}
+		label := name
+		if version != "" {
+			label = name + " " + version
+			m.ToolVersions = append(m.ToolVersions, label)
+		}
+		m.Tools = append(m.Tools, label)
+	}
+	for _, t := range md.Tools.Tools {
+		addTool(t.Name, t.Version)
+	}
+	for _, t := range md.Tools.Components {
+		addTool(t.Name, t.Version)
+	}
+	for _, lc := range md.Lifecycles {
+		if lc.Phase != "" {
+			m.Lifecycle = lc.Phase
+			break
+		}
+		if lc.Name != "" && m.Lifecycle == "" {
+			m.Lifecycle = lc.Name
+		}
+	}
+	return m
+}
+
+// lifecycleContext maps an explicitly declared generation context (CycloneDX
+// lifecycle phase or SPDX 3 sbomType) to "source", "binary" or "" when the
+// phase does not settle the question (e.g. "build").
+func lifecycleContext(phase string) string {
+	switch strings.ToLower(strings.TrimSpace(phase)) {
+	case "design", "pre-build", "source":
+		return "source"
+	case "post-build", "operations", "analyzed", "deployed", "runtime":
+		return "binary"
+	}
+	return ""
 }
 
 // componentKey returns the stable key for a component: its bom-ref if present,
@@ -82,17 +158,22 @@ func normalizeCDXComponent(c *CDXComponent) NormalizedPackage {
 		PURL:     c.PURL,
 		CPEs:     c.cdxResolveCPE(),
 		Supplier: cdxSupplierName(c),
+		// v1.6+ manufacturer/authors identify the component's creator.
+		Originator: cdxProducerName(c),
 	}
+	np.OtherIDs = append(append(np.OtherIDs, c.OmniborID...), c.SWHID...)
 
-	// CycloneDX has a single license notion. Map it to LicenseConcluded because
-	// that is the field most consumers read; leave LicenseDeclared empty so the
-	// license-coverage report can show the declared/concluded asymmetry honestly.
-	if expr := cdxLicenseExpr(c.Licenses); expr != "" {
-		np.LicenseConcluded = expr
-	} else {
+	// CycloneDX 1.6+ marks each license as declared or concluded via
+	// `acknowledgement`. Older BOMs have a single license notion, which is mapped
+	// to LicenseConcluded (the field most consumers read); LicenseDeclared then
+	// stays NOASSERTION so the license report shows the asymmetry honestly.
+	np.LicenseDeclared, np.LicenseConcluded = cdxLicenses(c.Licenses)
+	if np.LicenseDeclared == "" {
+		np.LicenseDeclared = NoAssertion
+	}
+	if np.LicenseConcluded == "" {
 		np.LicenseConcluded = NoAssertion
 	}
-	np.LicenseDeclared = NoAssertion
 
 	np.PURLType, np.ModulePath = parsePURL(np.PURL, np.Name)
 
@@ -236,10 +317,14 @@ func cdxToolLabel(doc *CycloneDXDocument) (label, name string) {
 	return "cyclonedx-tool", "cyclonedx"
 }
 
-// detectContextCDX infers source vs binary for a CycloneDX BOM. CycloneDX rarely
-// records this explicitly, so we use the primary component type and the presence
-// of a stdlib component as heuristics.
+// detectContextCDX infers source vs binary for a CycloneDX BOM. A declared
+// metadata.lifecycles phase wins; otherwise the primary component type and the
+// presence of a stdlib component are used as heuristics.
 func detectContextCDX(doc *CycloneDXDocument, p *Parsed) string {
+	// An explicit lifecycle phase (v1.5+) is the most reliable signal.
+	if ctx := lifecycleContext(p.Meta.Lifecycle); ctx != "" {
+		return ctx
+	}
 	if doc.Metadata != nil && doc.Metadata.Component != nil {
 		switch strings.ToLower(doc.Metadata.Component.Type) {
 		case "application", "container", "firmware", "operating-system":

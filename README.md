@@ -4,11 +4,12 @@
 > in the BOMHort monorepo under [`BOMcompare`](https://github.com/seebom-labs/BOMHort/tree/main/BOMcompare),
 > which is its upstream. Module path: `github.com/seebom-labs/BOMHort/BOMcompare`.
 
-A single-binary Go CLI that compares two SBOMs — **SPDX** (JSON or tag-value) or
-**CycloneDX** (JSON or XML) — and produces a structured quality diff report:
-package coverage, version accuracy, license resolution, PURL/CPE quality,
-dependency-graph depth, supplier/checksum coverage, annotation richness and a
-weighted composite score.
+A single-binary Go CLI that compares two SBOMs — **SPDX** (2.x JSON or
+tag-value, 3.0 JSON-LD) or **CycloneDX** (JSON or XML, 1.4–1.7) — and produces a
+structured quality diff report: package coverage, version accuracy, license
+resolution, PURL/CPE quality, dependency-graph depth, supplier/checksum coverage,
+annotation richness, a weighted composite score and an informational check
+against the **CISA 2026 Minimum Elements for an SBOM**.
 
 The two inputs may be in **different formats** (e.g. compare a CycloneDX SBOM
 from one tool against an SPDX SBOM from another) — every format is normalized to
@@ -27,15 +28,36 @@ you can mix and match:
 |--------|-----------|-------|
 | **SPDX JSON** | `{ "spdxVersion": ... }` | SPDX 2.2 / 2.3 |
 | **SPDX tag-value** | `SPDXVersion:` / `PackageName:` lines | the `.spdx` text format, incl. multi-line `<text>` blocks |
-| **CycloneDX JSON** | `{ "bomFormat"/"specVersion": ... }` | v1.4 and v1.5 (tools as array *or* `{components}`) |
-| **CycloneDX XML** | leading `<bom ...>` | v1.4 and v1.5 |
+| **SPDX 3.0 JSON-LD** | `@context` `https://spdx.org/rdf/3.*` or an `@graph` of SPDX elements | SPDX 3.0 / 3.0.1 (Core, Software, SimpleLicensing, ExpandedLicensing) |
+| **CycloneDX JSON** | `{ "bomFormat"/"specVersion": ... }` | v1.4 – v1.7 (tools as array *or* `{components}`) |
+| **CycloneDX XML** | leading `<bom ...>` | v1.4 – v1.7 (spec version read from the namespace) |
 
 Because SPDX and CycloneDX model some things differently, the tool normalizes:
 
+- SPDX 3 `@graph` elements (`software_Package`, `Relationship`,
+  `LifecycleScopedRelationship`, agents, annotations; inline or referenced by
+  `spdxId`) → the same model as SPDX 2:
+  - `software_packageUrl` / `externalIdentifier` (`packageUrl`, `cpe23`,
+    `cpe22`, `swid`, `gitoid`, `swhid`) → identity; `verifiedUsing` → checksums;
+    `suppliedBy` / `originatedBy` → supplier / originator.
+  - `hasDeclaredLicense` / `hasConcludedLicense` → `licenseDeclared` /
+    `licenseConcluded` (simple expressions, expanded license sets/operators,
+    `NoAssertionLicense` / `NoneLicense`).
+  - camelCase relationship types → SPDX 2 names (`dependsOn` → `DEPENDS_ON`);
+    `dependsOn` scoped `test` / `development` / `build` → `TEST_` / `DEV_` /
+    `BUILD_DEPENDENCY_OF`.
+  - `software_Sbom.rootElement` → the main module; `software_sbomType` → the
+    generation context.
 - CycloneDX `components[]` → packages; `metadata.component` → the main module.
-- CycloneDX `purl` / `cpe` (string or array) → package identity.
-- CycloneDX `licenses[]` (`license.id` / `license.name` / `expression`) →
-  mapped to `licenseConcluded` (CycloneDX has no declared/concluded split).
+- CycloneDX `purl` / `cpe` (string or array), `omniborId`, `swhid` → package
+  identity.
+- CycloneDX `licenses[]` (`license.id` / `license.name` / `expression`) → split
+  by the 1.6+ `acknowledgement` (`declared` / `concluded`); licenses without it
+  are mapped to `licenseConcluded`.
+- CycloneDX component `supplier` → supplier; 1.6+ `manufacturer` / `authors` →
+  originator.
+- CycloneDX `metadata.lifecycles[].phase` → generation context (`design`,
+  `pre-build` → source; `post-build`, `operations` → binary).
 - CycloneDX `hashes[]` (`alg: "SHA-256"`) → checksum coverage.
 - CycloneDX `scope: optional|excluded` → treated as non-runtime (test-scoped).
 - CycloneDX `dependencies[]` (`ref` / `dependsOn`) → SPDX-style `DEPENDS_ON`
@@ -44,7 +66,8 @@ Because SPDX and CycloneDX model some things differently, the tool normalizes:
   transparency scoring credits producers that ship them.
 
 > **Note on cross-format license scoring:** SPDX separates `licenseDeclared`
-> from `licenseConcluded`; CycloneDX has a single license notion. When comparing
+> from `licenseConcluded`; CycloneDX only does so via the 1.6+ `acknowledgement`
+> field, which many generators do not emit yet. When comparing
 > an SPDX SBOM (data often in `licenseDeclared`) against a CycloneDX one (mapped
 > to `licenseConcluded`), read the per-field rates in the License section rather
 > than a single headline number.
@@ -88,7 +111,7 @@ Requires Go 1.23+. No dependencies beyond the standard library.
 sbom-comparison [flags] <sbom-a> <sbom-b>
 ```
 
-Inputs can be any supported format (SPDX JSON/tag-value, CycloneDX JSON/XML) and
+Inputs can be any supported format (SPDX JSON/tag-value/3.0 JSON-LD, CycloneDX JSON/XML) and
 the two files need not be the same format.
 
 ### Flags
@@ -106,11 +129,11 @@ the two files need not be the same format.
 ### Output formats
 
 - **`markdown`** (default) — a full human-readable report with an executive
-  summary, ten numbered category sections, a findings table, a star scorecard
-  and actionable recommendations.
+  summary, ten numbered category sections, a findings table, a star scorecard,
+  a CISA 2026 minimum-elements table and actionable recommendations.
 - **`json`** — the complete structured result, for piping into other tools.
-- **`summary`** — just the scorecard table and the composite score (great for
-  terminals and CI logs).
+- **`summary`** — just the scorecard table, the composite score and the CISA
+  minimum-elements tally (great for terminals and CI logs).
 
 ### Examples
 
@@ -169,6 +192,18 @@ Each category produces a report section plus a 1–5 star score per SBOM:
    of distinct annotation fields.
 10. **Overall Score** — a weighted composite (license is weighted highest,
     annotations/CPE lowest), with a per-SBOM 1.0–5.0 score and a winner.
+11. **CISA 2026 Minimum Elements** — an informational compliance table (not part
+    of the score) per SBOM:
+    - Document level: author, signature, data format name and version,
+      generation context (lifecycle), timestamp, tool name and version, SBOM
+      version.
+    - Component level: producer, name, version, software identifiers (purl, CPE,
+      SWID, gitoid/OmniBOR, SWHID), hash, license and dependency relationship,
+      with coverage rates.
+    - `warn` marks fields covered only by an explicit SPDX `NOASSERTION`
+      (a declared unknown).
+    - `unverified` marks a signature the tool cannot judge from the document
+      alone (only enveloped CycloneDX JSF / XML-DSig signatures are detected).
 
 ### Finding classification
 
@@ -186,6 +221,12 @@ Findings are bucketed per the benchmark framework:
 ## Package matching
 
 - Packages are matched by **purl first**, falling back to **name + version**.
+- Every fallback candidate must be identity-compatible: two ecosystem purls of
+  different types (`pkg:npm/debug` vs `pkg:pypi/debug`) or different module
+  paths (`github.com/pkg/errors` vs `github.com/go-errors/errors`) never match.
+  Distro packages (`deb`, `rpm`, `apk`, …) may match across namespaces.
+- purls are parsed per the purl spec (percent-decoding, unencoded npm scopes
+  like `@angular/core`, `@` inside qualifiers).
 - For Go modules, `pkg:golang/<module>` and `pkg:generic/<name>` are matched on
   the **module path / last path segment** so a tool that emits a generic purl
   for the main module still lines up with one that emits an ecosystem purl
@@ -200,7 +241,9 @@ The tool labels each SBOM by its generating tool (from
 `creationInfo.creators`, e.g. `mikebom v0.1.0-alpha.47` vs `syft v1.42.3`) and
 infers whether it describes **source** or a **built binary** from creator
 provenance, `sourceInfo`, the presence of a `stdlib` component, and tool
-annotations. When the two SBOMs differ in scope, the report leads with a "Source
+annotations. An explicitly declared generation context — CycloneDX
+`metadata.lifecycles` or SPDX 3 `software_sbomType` — takes precedence over
+these heuristics. When the two SBOMs differ in scope, the report leads with a "Source
 SBOM vs Binary SBOM" note explaining that the package delta is expected.
 
 ## Development
@@ -240,6 +283,10 @@ Test fixtures live in `testdata/`:
 - `binary.cdx.json` — a **CycloneDX JSON** (v1.5) SBOM of the same binary
   (scoped components, hashes, `dependencies[]`, evidence).
 - `binary.cdx.xml` — the **CycloneDX XML** equivalent.
+- `source.spdx3.json` — `source.spdx.json` expressed as **SPDX 3.0.1 JSON-LD**
+  (inline agents, `externalIdentifier`, expanded license sets,
+  `LifecycleScopedRelationship`, `software_sbomType`). Tests assert it yields
+  the same analysis as its SPDX 2 counterpart.
 
 ## Project layout
 
@@ -250,11 +297,13 @@ BOMcompare/                 # subproject of github.com/seebom-labs/BOMHort
 │   ├── sbom/               # format detection + parse/normalize
 │   │   ├── spdx.go             # SPDX 2.3 JSON types
 │   │   ├── spdx_tagvalue.go    # SPDX tag-value parser
+│   │   ├── spdx3.go            # SPDX 3.0 JSON-LD → shared model
 │   │   ├── cyclonedx.go        # CycloneDX JSON types
 │   │   ├── cyclonedx_xml.go    # CycloneDX XML parser
 │   │   ├── cyclonedx_normalize.go  # CycloneDX → shared model
 │   │   └── parse.go            # Load(), DetectFormat(), normalization
-│   ├── compare/            # comparison engine + finding classification
+│   ├── compare/            # comparison engine, finding classification,
+│   │                       #   CISA minimum elements (minimum.go)
 │   └── report/             # markdown / json / summary renderers (+ golden tests)
 └── testdata/               # SPDX + CycloneDX fixtures used by tests
 ```

@@ -24,7 +24,8 @@ func RenderMarkdown(r *compare.Report) string {
 		w("## Note: Cross-Standard Comparison\n\n")
 		w("These SBOMs use different standards (SPDX vs CycloneDX). Field semantics " +
 			"differ — most importantly, SPDX separates `licenseDeclared` from " +
-			"`licenseConcluded` while CycloneDX has a single license notion (mapped to " +
+			"`licenseConcluded` while CycloneDX only distinguishes them via the 1.6+ " +
+			"`acknowledgement` field (licenses without it are mapped to " +
 			"`licenseConcluded` here). Read per-field license rates rather than a single " +
 			"headline number, and treat small structural deltas as format differences " +
 			"rather than defects.\n\n")
@@ -50,6 +51,7 @@ func RenderMarkdown(r *compare.Report) string {
 	writeAnnotations(&b, r)
 	writeFindings(&b, r)
 	writeScorecard(&b, r)
+	writeMinimumElements(&b, r)
 	writeRecommendations(&b, r)
 
 	w("---\n\n")
@@ -344,6 +346,51 @@ func writeScorecard(b *strings.Builder, r *compare.Report) {
 	w("**Weighted composite:** %s **%.1f / 5.0**  ·  %s **%.1f / 5.0**  →  Winner: **%s**\n\n",
 		r.LabelA, r.Overall.ScoreA, r.LabelB, r.Overall.ScoreB, r.Overall.Winner)
 	w("---\n\n")
+}
+
+func writeMinimumElements(b *strings.Builder, r *compare.Report) {
+	w := func(format string, a ...any) { fmt.Fprintf(b, format, a...) }
+	m := r.MinimumElements
+	w("## 11. Compliance — %s\n\n", m.Reference)
+	w("Informational; not part of the weighted scorecard. `warn` = covered only by a declared unknown (NOASSERTION); ")
+	w("`unverified` = cannot be judged from the document alone.\n\n")
+	w("| Element | Scope | %s | %s |\n", r.LabelA, r.LabelB)
+	w("|---------|-------|%s|%s|\n", dashes(r.LabelA), dashes(r.LabelB))
+	for _, row := range m.Rows {
+		w("| %s | %s | %s | %s |\n", row.Element, row.Scope, minCell(row.Scope, row.A), minCell(row.Scope, row.B))
+	}
+	w("\n**Elements fully met:** %s **%d/%d**  ·  %s **%d/%d**\n\n",
+		r.LabelA, m.PassedA, m.Total, r.LabelB, m.PassedB, m.Total)
+	w("---\n\n")
+}
+
+func minCell(scope string, res compare.MinElementResult) string {
+	var detail string
+	switch {
+	case scope == "component":
+		detail = fmt.Sprintf("%d/%d (%.1f%%)", res.Present, res.Total, res.Rate)
+		if res.Unknown > 0 {
+			detail += fmt.Sprintf(", %d unknown", res.Unknown)
+		}
+	case res.Value == "":
+		detail = "missing"
+	default:
+		detail = strings.ReplaceAll(trunc(res.Value, 48), "|", "\\|")
+	}
+	return minIcon(res.Status) + " " + detail
+}
+
+func minIcon(status string) string {
+	switch status {
+	case compare.MinPass:
+		return "✅"
+	case compare.MinWarn:
+		return "⚠️"
+	case compare.MinUnverified:
+		return "❔"
+	default:
+		return "❌"
+	}
 }
 
 func writeRecommendations(b *strings.Builder, r *compare.Report) {

@@ -1,5 +1,6 @@
-// Command sbom-comparison compares two SPDX 2.3 JSON SBOMs and produces a
-// structured quality diff report (markdown, JSON or summary).
+// Command sbom-comparison compares two SBOMs (SPDX 2.x JSON/tag-value, SPDX 3.0
+// JSON-LD, CycloneDX JSON/XML) and produces a structured quality diff report
+// (markdown, JSON or summary).
 //
 // Exit codes:
 //
@@ -43,8 +44,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	fs.Usage = func() {
 		fmt.Fprintf(stderr, "sbom-comparison %s — compare two SBOMs (SPDX or CycloneDX)\n\n", version)
 		fmt.Fprintf(stderr, "Usage:\n  sbom-comparison [flags] <sbom-a> <sbom-b>\n\n")
-		fmt.Fprintf(stderr, "Supported formats (auto-detected): SPDX JSON, SPDX tag-value,\n")
-		fmt.Fprintf(stderr, "CycloneDX JSON, CycloneDX XML. The two inputs may be in different formats.\n\n")
+		fmt.Fprintf(stderr, "Supported formats (auto-detected): SPDX 2.x JSON, SPDX tag-value,\n")
+		fmt.Fprintf(stderr, "SPDX 3.0 JSON-LD, CycloneDX JSON, CycloneDX XML (1.4-1.7).\n")
+		fmt.Fprintf(stderr, "The two inputs may be in different formats.\n\n")
 		fmt.Fprintf(stderr, "Flags:\n")
 		fs.PrintDefaults()
 		fmt.Fprintf(stderr, "\nExamples:\n")

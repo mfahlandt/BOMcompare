@@ -3,6 +3,7 @@ package sbom
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -33,18 +34,54 @@ type Parsed struct {
 	DocAnnotations []Annotation
 
 	// Format identifies the source serialization: "spdx-json",
-	// "spdx-tagvalue", "cyclonedx-json" or "cyclonedx-xml".
+	// "spdx-tagvalue", "spdx3-jsonld", "cyclonedx-json" or "cyclonedx-xml".
 	Format string
 
-	// Exactly one of Raw / CycloneDX is set, depending on Format.
+	// Meta holds document-level metadata (author, tools, timestamp, lifecycle)
+	// used for minimum-elements compliance checks.
+	Meta DocMeta
+
+	// Exactly one of Raw / CycloneDX is set, depending on Format. SPDX 3
+	// documents are converted to the SPDX 2-shaped Raw document.
 	Raw       *Document
 	CycloneDX *CycloneDXDocument
+}
+
+// DocMeta is format-independent document metadata, mapped onto the SBOM
+// document fields named by the CISA 2026 Minimum Elements.
+type DocMeta struct {
+	// SpecVersion is the data format version, e.g. "SPDX-2.3", "SPDX-3.0.1" or
+	// "CycloneDX-1.6". Empty if the document does not state it.
+	SpecVersion string `json:"specVersion"`
+	// Created is the document timestamp as written in the SBOM.
+	Created string `json:"created"`
+	// Authors are the non-tool creators (organizations / persons).
+	Authors []string `json:"authors,omitempty"`
+	// Tools are the generating tools; ToolVersions the subset that carry a
+	// version.
+	Tools        []string `json:"tools,omitempty"`
+	ToolVersions []string `json:"toolVersions,omitempty"`
+	// Lifecycle is the explicitly declared generation context (CycloneDX
+	// metadata.lifecycles phase, SPDX 3 software_sbomType, or a tool
+	// annotation), e.g. "pre-build", "post-build", "source", "analyzed".
+	Lifecycle string `json:"lifecycle,omitempty"`
+	// DocVersion identifies this revision of the SBOM (CycloneDX
+	// serialNumber/version, SPDX documentNamespace / SpdxDocument id).
+	DocVersion string `json:"docVersion,omitempty"`
+	// DependencyDeclared lists element IDs whose dependency set was stated
+	// explicitly even when empty (CycloneDX dependencies[].ref with no
+	// dependsOn). Used for dependency-relationship coverage.
+	DependencyDeclared map[string]bool `json:"-"`
+	// Signed reports an enveloped in-document signature (CycloneDX JSF or
+	// XML-DSig). Detached signatures and attestations are not visible here.
+	Signed bool `json:"signed,omitempty"`
 }
 
 // Format identifiers returned by DetectFormat and stored on Parsed.Format.
 const (
 	FormatSPDXJSON      = "spdx-json"
 	FormatSPDXTagValue  = "spdx-tagvalue"
+	FormatSPDX3JSONLD   = "spdx3-jsonld"
 	FormatCycloneDXJSON = "cyclonedx-json"
 	FormatCycloneDXXML  = "cyclonedx-xml"
 	FormatUnknown       = "unknown"
@@ -61,6 +98,8 @@ type NormalizedPackage struct {
 	PURLType   string   // e.g. "golang", "generic", "npm"
 	ModulePath string   // best-effort module path for cross-type matching
 	CPEs       []string // all CPE 2.3 locators
+	// OtherIDs are additional identifiers (SWID, OmniBOR gitoid, SWHID).
+	OtherIDs []string
 
 	// License.
 	LicenseDeclared  string
@@ -68,6 +107,7 @@ type NormalizedPackage struct {
 
 	// Attribution / integrity.
 	Supplier    string
+	Originator  string // SPDX originator / CycloneDX manufacturer or authors
 	HasSHA256   bool
 	ChecksumNum int
 
@@ -118,6 +158,8 @@ func loadFormat(format string, data []byte, path string) (*Parsed, error) {
 			return nil, err
 		}
 		return Normalize(doc), nil
+	case FormatSPDX3JSONLD:
+		return parseSPDX3(data)
 	case FormatCycloneDXJSON:
 		doc, err := parseCycloneDXJSON(data)
 		if err != nil {
@@ -131,8 +173,13 @@ func loadFormat(format string, data []byte, path string) (*Parsed, error) {
 		}
 		return NormalizeCycloneDX(doc), nil
 	default:
-		return nil, fmt.Errorf("unrecognized SBOM format (not SPDX JSON/tag-value or CycloneDX JSON/XML)")
+		return nil, fmt.Errorf("unrecognized SBOM format (not SPDX 2 JSON/tag-value, SPDX 3 JSON-LD or CycloneDX JSON/XML)")
 	}
+}
+
+// LoadSPDX3 parses a file as SPDX 3 JSON-LD regardless of detection.
+func LoadSPDX3(path string) (*Parsed, error) {
+	return loadExplicit(FormatSPDX3JSONLD, path)
 }
 
 // LoadSPDXJSON parses bytes as SPDX JSON regardless of detection.
@@ -183,7 +230,8 @@ func loadExplicit(format, path string) (*Parsed, error) {
 //
 // Heuristics (in order):
 //   - leading '<' (after optional BOM / xml prolog) → CycloneDX XML
-//   - leading '{' or '[' → JSON; distinguished by "spdxVersion" (SPDX) vs
+//   - leading '{' or '[' → JSON; distinguished by "spdxVersion" (SPDX 2),
+//     an SPDX 3 JSON-LD "@context" / "@graph" (SPDX 3) or
 //     "bomFormat"/"specVersion" (CycloneDX)
 //   - presence of "SPDXVersion:" / "PackageName:" lines → SPDX tag-value
 func DetectFormat(data []byte) string {
@@ -198,22 +246,11 @@ func DetectFormat(data []byte) string {
 		if len(head) > 4096 {
 			head = head[:4096]
 		}
-		hs := string(head)
-		if strings.Contains(hs, "\"spdxVersion\"") {
-			return FormatSPDXJSON
-		}
-		if strings.Contains(hs, "\"bomFormat\"") || strings.Contains(hs, "\"specVersion\"") {
-			return FormatCycloneDXJSON
+		if f := detectJSONMarkers(string(head)); f != FormatUnknown {
+			return f
 		}
 		// Fall back to a full scan of the whole document for the markers.
-		full := string(data)
-		if strings.Contains(full, "\"spdxVersion\"") {
-			return FormatSPDXJSON
-		}
-		if strings.Contains(full, "\"bomFormat\"") || strings.Contains(full, "\"specVersion\"") {
-			return FormatCycloneDXJSON
-		}
-		return FormatUnknown
+		return detectJSONMarkers(string(data))
 	case 0:
 		return FormatUnknown
 	default:
@@ -229,6 +266,32 @@ func DetectFormat(data []byte) string {
 		}
 		return FormatUnknown
 	}
+}
+
+// detectJSONMarkers classifies a JSON SBOM by its distinguishing keys. SPDX 3
+// is checked before CycloneDX because SPDX 3 CreationInfo also carries a
+// "specVersion" key.
+func detectJSONMarkers(s string) string {
+	switch {
+	case strings.Contains(s, "\"spdxVersion\""):
+		return FormatSPDXJSON
+	case isSPDX3JSONLD(s):
+		return FormatSPDX3JSONLD
+	case strings.Contains(s, "\"bomFormat\"") || strings.Contains(s, "\"specVersion\""):
+		return FormatCycloneDXJSON
+	}
+	return FormatUnknown
+}
+
+// isSPDX3JSONLD reports whether JSON text looks like an SPDX 3 JSON-LD
+// serialization: an SPDX RDF context, or an @graph of SPDX-typed elements.
+func isSPDX3JSONLD(s string) bool {
+	if strings.Contains(s, "spdx.org/rdf/3") {
+		return true
+	}
+	return strings.Contains(s, "\"@graph\"") &&
+		(strings.Contains(s, "\"SpdxDocument\"") || strings.Contains(s, "\"software_Package\"") ||
+			strings.Contains(s, "\"spdxId\""))
 }
 
 // firstNonSpace returns the first non-whitespace byte, skipping a UTF-8 BOM and
@@ -278,8 +341,71 @@ func Normalize(doc *Document) *Parsed {
 	applyScopeFromGraph(p, doc)
 	applyMainModule(p, doc)
 
+	p.Meta = spdxDocMeta(doc, p)
 	p.Context = detectContext(doc, p)
 	return p
+}
+
+// spdxDocMeta extracts document metadata from an SPDX 2 creationInfo block.
+func spdxDocMeta(doc *Document, p *Parsed) DocMeta {
+	m := DocMeta{
+		SpecVersion: doc.SPDXVersion,
+		Created:     doc.CreationInfo.Created,
+		DocVersion:  doc.DocumentNamespace,
+	}
+	for _, c := range doc.CreationInfo.Creators {
+		c = strings.TrimSpace(c)
+		switch {
+		case strings.HasPrefix(c, "Tool:"):
+			rest := strings.TrimSpace(strings.TrimPrefix(c, "Tool:"))
+			if idx := strings.Index(rest, " source:"); idx >= 0 {
+				rest = strings.TrimSpace(rest[:idx])
+			}
+			if rest == "" || containsStr(m.Tools, rest) {
+				continue
+			}
+			m.Tools = append(m.Tools, rest)
+			if _, v := splitToolVersion(rest); v != "" {
+				m.ToolVersions = append(m.ToolVersions, rest)
+			}
+		case strings.HasPrefix(c, "Organization:"), strings.HasPrefix(c, "Person:"):
+			if name := strings.TrimSpace(c[strings.IndexByte(c, ':')+1:]); name != "" {
+				m.Authors = append(m.Authors, name)
+			}
+		}
+	}
+	m.Lifecycle = annotatedLifecycle(p.DocAnnotations)
+	return m
+}
+
+// annotatedLifecycle returns an explicitly annotated generation context
+// (e.g. mikebom's "sbom-tier" annotation), if any.
+func annotatedLifecycle(anns []Annotation) string {
+	for _, a := range anns {
+		var payload AnnotationPayload
+		if json.Unmarshal([]byte(a.Comment), &payload) != nil {
+			continue
+		}
+		f := strings.ToLower(payload.Field)
+		if !strings.HasSuffix(f, "sbom-tier") && !strings.HasSuffix(f, "lifecycle") &&
+			!strings.HasSuffix(f, "sbom-type") {
+			continue
+		}
+		var v string
+		if json.Unmarshal(payload.Value, &v) == nil && v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func containsStr(list []string, s string) bool {
+	for _, x := range list {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 // toolLabel returns a human label ("syft v1.42.3") and a short name ("syft")
@@ -313,12 +439,13 @@ func toolLabel(creators []string) (label, name string) {
 }
 
 // splitToolVersion splits "syft-1.42.3", "syft 1.42.3" or "mikebom-0.1.0-alpha.47"
-// into name and version. The version is taken as the substring starting at the
-// first digit-leading token after a '-' or space.
+// into name and version. A space-separated trailing token is only treated as a
+// version when it looks like one, so multi-word tool names ("Source Auditor
+// Open Source Console") stay intact.
 func splitToolVersion(s string) (name, version string) {
-	// Prefer a space separator if present ("Tool: name version").
-	if i := strings.IndexByte(s, ' '); i >= 0 {
-		return strings.TrimSpace(s[:i]), strings.TrimSpace(s[i+1:])
+	s = strings.TrimSpace(s)
+	if i := strings.LastIndexByte(s, ' '); i >= 0 && looksLikeVersion(s[i+1:]) {
+		return strings.TrimSpace(s[:i]), s[i+1:]
 	}
 	// Otherwise split on the first '-' that is followed by a digit.
 	for i := 0; i < len(s)-1; i++ {
@@ -329,6 +456,13 @@ func splitToolVersion(s string) (name, version string) {
 	return s, ""
 }
 
+// looksLikeVersion reports whether a token starts with a digit, optionally
+// prefixed by "v" (e.g. "1.42.3", "v0.1.0-alpha.47").
+func looksLikeVersion(tok string) bool {
+	tok = strings.TrimPrefix(strings.TrimPrefix(tok, "v"), "V")
+	return tok != "" && tok[0] >= '0' && tok[0] <= '9'
+}
+
 func normalizePackage(pkg *Package) NormalizedPackage {
 	np := NormalizedPackage{
 		SPDXID:           pkg.SPDXID,
@@ -337,6 +471,7 @@ func normalizePackage(pkg *Package) NormalizedPackage {
 		LicenseDeclared:  pkg.LicenseDeclared,
 		LicenseConcluded: pkg.LicenseConcluded,
 		Supplier:         pkg.Supplier,
+		Originator:       pkg.Originator,
 		Annotations:      pkg.Annotations,
 	}
 
@@ -347,9 +482,13 @@ func normalizePackage(pkg *Package) NormalizedPackage {
 			if np.PURL == "" {
 				np.PURL = ref.ReferenceLocator
 			}
-		case "cpe23Type", "cpe23", "cpe":
+		case "cpe23Type", "cpe23", "cpe", "cpe22Type":
 			if ref.ReferenceLocator != "" {
 				np.CPEs = append(np.CPEs, ref.ReferenceLocator)
+			}
+		case "swid", "gitoid", "swh":
+			if ref.ReferenceLocator != "" {
+				np.OtherIDs = append(np.OtherIDs, ref.ReferenceLocator)
 			}
 		}
 	}
@@ -390,30 +529,58 @@ func parsePURL(purl, fallbackName string) (purlType, modulePath string) {
 		// e.g. "pkg:golang" with no path — unusual.
 		return strings.SplitN(rest, "@", 2)[0], strings.ToLower(fallbackName)
 	}
-	purlType = rest[:slash]
+	purlType = strings.ToLower(rest[:slash])
 	pathAndVer := rest[slash+1:]
-	// Strip version (@...) and qualifiers (?...) and subpath (#...).
-	if i := strings.IndexAny(pathAndVer, "@?#"); i >= 0 {
+	// Strip qualifiers (?...) and subpath (#...), then the version (@...).
+	if i := strings.IndexAny(pathAndVer, "?#"); i >= 0 {
 		pathAndVer = pathAndVer[:i]
 	}
-	modulePath = strings.ToLower(pathAndVer)
+	if at := versionAt(pathAndVer); at >= 0 {
+		pathAndVer = pathAndVer[:at]
+	}
+	// purl components are percent-encoded (e.g. npm scopes "%40angular").
+	modulePath = strings.ToLower(purlUnescape(strings.Trim(pathAndVer, "/")))
 	if modulePath == "" {
 		modulePath = strings.ToLower(fallbackName)
 	}
 	return purlType, modulePath
 }
 
+// purlUnescape percent-decodes a purl component, returning it unchanged if it
+// is not validly encoded.
+func purlUnescape(s string) string {
+	if !strings.Contains(s, "%") {
+		return s
+	}
+	if u, err := url.PathUnescape(s); err == nil {
+		return u
+	}
+	return s
+}
+
 // PURLVersion extracts the @version portion of a purl, if present.
 func PURLVersion(purl string) string {
-	at := strings.LastIndexByte(purl, '@')
+	// Only the part before qualifiers/subpath can carry the version; an '@'
+	// inside a qualifier value (e.g. repository_url) must not be mistaken for it.
+	if i := strings.IndexAny(purl, "?#"); i >= 0 {
+		purl = purl[:i]
+	}
+	at := versionAt(purl)
 	if at < 0 {
 		return ""
 	}
-	v := purl[at+1:]
-	if i := strings.IndexAny(v, "?#"); i >= 0 {
-		v = v[:i]
+	return purlUnescape(purl[at+1:])
+}
+
+// versionAt returns the index of the '@' that separates the purl version, or
+// -1. An '@' that starts a path segment (an unencoded npm scope such as
+// "@angular/core") is part of the name, not a version separator.
+func versionAt(s string) int {
+	at := strings.LastIndexByte(s, '@')
+	if at <= 0 || s[at-1] == '/' || strings.Contains(s[at+1:], "/") {
+		return -1
 	}
-	return v
+	return at
 }
 
 // PURLHasQualifiers reports whether the purl carries ?key=value qualifiers.
@@ -464,24 +631,34 @@ func applyScopeFromGraph(p *Parsed, doc *Document) {
 	}
 }
 
-// applyMainModule flags the package(s) the document DESCRIBES. SPDX wraps the
-// described element in a DocumentRoot, so we resolve one hop: DOCUMENT
-// -DESCRIBES-> Root, and treat the package the Root DESCRIBES/CONTAINS as main.
-// We also directly flag any package the DOCUMENT DESCRIBES.
+// applyMainModule flags the package(s) the document DESCRIBES. Some tools (e.g.
+// syft) describe a synthetic "DocumentRoot-*" wrapper rather than the real
+// artifact; only for such wrappers (or described elements that are not
+// packages) do we resolve one hop via DESCRIBES/CONTAINS/GENERATED_FROM to find
+// the real main package. Hopping from a real package would wrongly flag every
+// dependency it CONTAINS as a main module.
 func applyMainModule(p *Parsed, doc *Document) {
 	described := map[string]bool{}
-	roots := map[string]bool{}
+	wrappers := map[string]bool{}
+	mark := func(id string) {
+		np := p.BySPDXID[id]
+		if np == nil || isDocumentRootWrapper(np.SPDXID, np.Name) {
+			wrappers[id] = true
+			return
+		}
+		described[id] = true
+	}
 	for _, r := range doc.Relationships {
 		if strings.EqualFold(r.RelationshipType, "DESCRIBES") {
-			roots[r.RelatedSPDXElement] = true
-			if np := p.BySPDXID[r.RelatedSPDXElement]; np != nil {
-				described[np.SPDXID] = true
-			}
+			mark(r.RelatedSPDXElement)
 		}
 	}
-	// One hop from roots via DESCRIBES/CONTAINS to find the real main package.
+	for _, id := range doc.DocumentDescribes {
+		mark(id)
+	}
+	// One hop from wrapper roots to find the real main package.
 	for _, r := range doc.Relationships {
-		if !roots[r.SPDXElementID] {
+		if !wrappers[r.SPDXElementID] {
 			continue
 		}
 		if strings.EqualFold(r.RelationshipType, "DESCRIBES") ||
@@ -492,9 +669,10 @@ func applyMainModule(p *Parsed, doc *Document) {
 			}
 		}
 	}
-	for _, id := range doc.DocumentDescribes {
-		if np := p.BySPDXID[id]; np != nil {
-			described[np.SPDXID] = true
+	// Fall back to the wrapper itself when it is a package with nothing beneath.
+	if len(described) == 0 {
+		for id := range wrappers {
+			described[id] = true
 		}
 	}
 	for id := range described {
@@ -502,6 +680,12 @@ func applyMainModule(p *Parsed, doc *Document) {
 			np.IsMainModule = true
 		}
 	}
+}
+
+// isDocumentRootWrapper recognizes synthetic root elements that wrap the real
+// subject of the SBOM (syft's "SPDXRef-DocumentRoot-Directory-..." etc.).
+func isDocumentRootWrapper(id, name string) bool {
+	return strings.Contains(id, "DocumentRoot") || strings.HasPrefix(name, "DocumentRoot")
 }
 
 // detectContext infers whether the SBOM describes source or a built binary,

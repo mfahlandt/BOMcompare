@@ -1,0 +1,21 @@
+SBOM Comparison Summary
+A: mikebom v0.1.0-alpha.47   [spdx3-jsonld] (source)
+B: cyclonedx-gomod v1.9.0   [cyclonedx-xml] (source)
+
+Category                  Weight   A      B      Winner
+----------------------------------------------------------
+Completeness              High     5/5    2/5    A
+Version Accuracy          High     5/5    5/5    —
+License Coverage          Critic…  5/5    2/5    A
+Dependency Graph          Medium   5/5    2/5    A
+Supplier Attribution      Medium   5/5    2/5    A
+Checksum Coverage         Medium   3/5    2/5    A
+PURL Quality              Medium   4/5    5/5    B
+CPE Coverage              Low      5/5    2/5    A
+Annotations/Transparency  Low      5/5    1/5    A
+----------------------------------------------------------
+OVERALL (weighted)                 4.7    2.7    A
+
+Findings: MISSING_COMPONENT=2  PURL_MISMATCH=1  LICENSE_GAP=1
+CISA 2026 minimum elements met: A 14/16   B 10/16
+Differences: true   Significant: true

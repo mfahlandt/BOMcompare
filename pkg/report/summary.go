@@ -47,6 +47,8 @@ func RenderSummary(r *compare.Report) string {
 		}
 		fmt.Fprintf(&b, "%s\n", strings.Join(parts, "  "))
 	}
+	m := r.MinimumElements
+	fmt.Fprintf(&b, "CISA 2026 minimum elements met: A %d/%d   B %d/%d\n", m.PassedA, m.Total, m.PassedB, m.Total)
 	fmt.Fprintf(&b, "Differences: %v   Significant: %v\n", r.Overall.HasDiff, r.Overall.Significant)
 	return b.String()
 }

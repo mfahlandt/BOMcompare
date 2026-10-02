@@ -38,6 +38,10 @@ type Report struct {
 	Checksums    Checksums    `json:"checksums"`
 	Annotations  Annotations  `json:"annotations"`
 
+	// MinimumElements is an informational CISA 2026 minimum-elements check;
+	// it does not influence the scorecard.
+	MinimumElements MinimumElements `json:"minimumElements"`
+
 	Findings []Finding `json:"findings"`
 
 	Scorecard []ScoreRow `json:"scorecard"`
@@ -128,6 +132,7 @@ func Run(a, b *sbom.Parsed, opts Options) *Report {
 	r.Suppliers = analyzeSuppliers(a, b)
 	r.Checksums = analyzeChecksums(a, b)
 	r.Annotations = analyzeAnnotations(a, b)
+	r.MinimumElements = analyzeMinimumElements(a, b)
 
 	r.Findings = classifyFindings(r, sets)
 
@@ -255,22 +260,54 @@ func identityKeys(p *sbom.NormalizedPackage) []string {
 // returned, so each B is paired at most once and a collision falls through to a
 // looser, still-unclaimed candidate instead of being misreported as missing.
 func findMatch(pa *sbom.NormalizedPackage, byKeyB, looseB, identB map[string]*sbom.NormalizedPackage, matchedB map[string]bool) *sbom.NormalizedPackage {
+	ok := func(pb *sbom.NormalizedPackage, found bool) bool {
+		return found && !matchedB[pb.SPDXID] && identityCompatible(pa, pb)
+	}
 	// 1) exact canonical key (module/name + version).
-	if pb, ok := byKeyB[matchKey(pa)]; ok && !matchedB[pb.SPDXID] {
+	if pb, found := byKeyB[matchKey(pa)]; ok(pb, found) {
 		return pb
 	}
 	// 2) relaxed version-aware keys (name+version, last-segment+version).
 	for _, k := range looseKeys(pa) {
-		if pb, ok := looseB[k]; ok && !matchedB[pb.SPDXID] {
+		if pb, found := looseB[k]; ok(pb, found) {
 			return pb
 		}
 	}
 	// 3) version-independent identity (captures version mismatches). Skip targets
 	// already matched to avoid collapsing distinct packages.
 	for _, k := range identityKeys(pa) {
-		if pb, ok := identB[k]; ok && !matchedB[pb.SPDXID] {
+		if pb, found := identB[k]; ok(pb, found) {
 			return pb
 		}
 	}
 	return nil
+}
+
+// distroPURLTypes are purl types whose namespace is a vendor/distro qualifier
+// (pkg:deb/debian/x vs pkg:deb/ubuntu/x), so packages may match by name alone.
+var distroPURLTypes = map[string]bool{
+	"deb": true, "rpm": true, "apk": true, "alpm": true, "qpkg": true,
+}
+
+// identityCompatible rejects a candidate pair whose ecosystem purls prove they
+// are different packages — e.g. github.com/pkg/errors vs
+// github.com/go-errors/errors (same last segment) or pkg:npm/debug vs
+// pkg:pypi/debug (same name). Pairs where either side lacks an ecosystem purl
+// (none, or pkg:generic) stay matchable so a generic main module still lines up
+// with its ecosystem-typed counterpart.
+func identityCompatible(a, b *sbom.NormalizedPackage) bool {
+	if !ecosystemPURL(a) || !ecosystemPURL(b) {
+		return true
+	}
+	if a.PURLType != b.PURLType {
+		return false
+	}
+	if a.ModulePath == b.ModulePath {
+		return true
+	}
+	return distroPURLTypes[a.PURLType] && lastSegment(a.ModulePath) == lastSegment(b.ModulePath)
+}
+
+func ecosystemPURL(p *sbom.NormalizedPackage) bool {
+	return p.PURL != "" && p.PURLType != "" && p.PURLType != "generic"
 }

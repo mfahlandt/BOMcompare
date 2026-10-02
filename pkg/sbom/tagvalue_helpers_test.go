@@ -42,6 +42,8 @@ func TestSplitToolVersion(t *testing.T) {
 		{"syft-1.42.3", "syft", "1.42.3"},
 		{"mikebom-0.1.0-alpha.47", "mikebom", "0.1.0-alpha.47"},
 		{"tool-no-version", "tool-no-version", ""},
+		{"Source Auditor Open Source Console", "Source Auditor Open Source Console", ""},
+		{"Microsoft SBOM Tool v2.2.0", "Microsoft SBOM Tool", "v2.2.0"},
 	}
 	for _, c := range cases {
 		n, v := splitToolVersion(c.in)

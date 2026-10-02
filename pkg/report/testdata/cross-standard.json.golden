@@ -195,20 +195,247 @@
     "starsA": 1,
     "starsB": 3
   },
+  "minimumElements": {
+    "reference": "CISA 2026 Minimum Elements for a Software Bill of Materials",
+    "rows": [
+      {
+        "element": "SBOM Author",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "Anchore, Inc"
+        },
+        "b": {
+          "status": "fail"
+        }
+      },
+      {
+        "element": "Author Signature",
+        "scope": "document",
+        "a": {
+          "status": "unverified",
+          "value": "not signed in-document"
+        },
+        "b": {
+          "status": "unverified",
+          "value": "not signed in-document"
+        }
+      },
+      {
+        "element": "Data Format Name",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "SPDX"
+        },
+        "b": {
+          "status": "pass",
+          "value": "CycloneDX"
+        }
+      },
+      {
+        "element": "Data Format Version",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "SPDX-2.3"
+        },
+        "b": {
+          "status": "pass",
+          "value": "CycloneDX-1.5"
+        }
+      },
+      {
+        "element": "Generation Context",
+        "scope": "document",
+        "a": {
+          "status": "fail",
+          "value": "not declared (inferred: binary)"
+        },
+        "b": {
+          "status": "fail",
+          "value": "not declared (inferred: source)"
+        }
+      },
+      {
+        "element": "Timestamp",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "2026-06-16T16:05:00Z"
+        },
+        "b": {
+          "status": "pass",
+          "value": "2026-06-16T16:10:00Z"
+        }
+      },
+      {
+        "element": "Tool Name",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "syft-1.42.3"
+        },
+        "b": {
+          "status": "pass",
+          "value": "cyclonedx-gomod 1.9.0"
+        }
+      },
+      {
+        "element": "Tool Version",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "syft-1.42.3"
+        },
+        "b": {
+          "status": "pass",
+          "value": "cyclonedx-gomod 1.9.0"
+        }
+      },
+      {
+        "element": "SBOM Version",
+        "scope": "document",
+        "a": {
+          "status": "pass",
+          "value": "https://example.com/demo/binary"
+        },
+        "b": {
+          "status": "pass",
+          "value": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79#1"
+        }
+      },
+      {
+        "element": "Component Producer",
+        "scope": "component",
+        "a": {
+          "status": "warn",
+          "unknown": 3,
+          "total": 3
+        },
+        "b": {
+          "status": "fail",
+          "present": 2,
+          "total": 3,
+          "rate": 66.66666666666666
+        }
+      },
+      {
+        "element": "Component Name",
+        "scope": "component",
+        "a": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        },
+        "b": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        }
+      },
+      {
+        "element": "Component Version",
+        "scope": "component",
+        "a": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        },
+        "b": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        }
+      },
+      {
+        "element": "Software Identifiers",
+        "scope": "component",
+        "a": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        },
+        "b": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        }
+      },
+      {
+        "element": "Component Hash (value + algorithm)",
+        "scope": "component",
+        "a": {
+          "status": "fail",
+          "present": 1,
+          "total": 3,
+          "rate": 33.33333333333333
+        },
+        "b": {
+          "status": "fail",
+          "present": 1,
+          "total": 3,
+          "rate": 33.33333333333333
+        }
+      },
+      {
+        "element": "License",
+        "scope": "component",
+        "a": {
+          "status": "warn",
+          "present": 2,
+          "unknown": 1,
+          "total": 3,
+          "rate": 66.66666666666666
+        },
+        "b": {
+          "status": "fail",
+          "present": 2,
+          "total": 3,
+          "rate": 66.66666666666666
+        }
+      },
+      {
+        "element": "Dependency Relationship",
+        "scope": "component",
+        "a": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        },
+        "b": {
+          "status": "pass",
+          "present": 3,
+          "total": 3,
+          "rate": 100
+        }
+      }
+    ],
+    "passedA": 11,
+    "passedB": 10,
+    "total": 16
+  },
   "findings": [
     {
       "type": "MISSING_COMPONENT",
       "severity": "low",
       "side": "A",
       "package": "github.com/stretchr/testify@v1.9.0",
-      "detail": "present in syft v1.42.3 but absent here (test-scoped dependency)"
+      "detail": "present in cyclonedx-gomod v1.9.0 but absent here (test-scoped dependency); expected when comparing a binary SBOM against a source SBOM"
     },
     {
       "type": "MISSING_COMPONENT",
       "severity": "medium",
       "side": "B",
       "package": "stdlib@go1.23.4",
-      "detail": "present in cyclonedx-gomod v1.9.0 but absent here (Go standard library) (main module — may be a purl/identity difference rather than a true omission)"
+      "detail": "present in syft v1.42.3 but absent here (Go standard library)"
     },
     {
       "type": "LICENSE_GAP",

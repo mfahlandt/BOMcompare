@@ -20,6 +20,8 @@ func TestDetectFormat(t *testing.T) {
 		{"unknown", "just some random text without markers", FormatUnknown},
 		{"empty", "", FormatUnknown},
 		{"json-with-bom-prefix", "\ufeff{\"spdxVersion\":\"SPDX-2.3\"}", FormatSPDXJSON},
+		{"spdx3-context", `{"@context":"https://spdx.org/rdf/3.0.1/spdx-context.jsonld","@graph":[{"type":"CreationInfo","specVersion":"3.0.1"}]}`, FormatSPDX3JSONLD},
+		{"spdx3-graph-no-context", `{"@graph":[{"type":"software_Package","spdxId":"urn:x"}]}`, FormatSPDX3JSONLD},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

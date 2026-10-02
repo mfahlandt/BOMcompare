@@ -66,9 +66,35 @@ func depStats(p *sbom.Parsed) (total int, dist []TypeCount, testEdges, maxDepth 
 	return total, dist, testEdges, maxDepth
 }
 
+// forwardDepEdges are relationship types where SPDXElementID depends on /
+// incorporates RelatedSPDXElement (SPDX 2 names plus the SPDX 3 names as
+// normalized to UPPER_SNAKE by the SPDX 3 loader).
+var forwardDepEdges = map[string]bool{
+	"DEPENDS_ON": true, "CONTAINS": true, "GENERATED_FROM": true,
+	"STATIC_LINK": true, "DYNAMIC_LINK": true,
+	"HAS_STATIC_LINK": true, "HAS_DYNAMIC_LINK": true,
+	"HAS_OPTIONAL_DEPENDENCY": true, "HAS_PROVIDED_DEPENDENCY": true,
+	"HAS_OPTIONAL_COMPONENT": true,
+}
+
+// reverseDepEdges are "X <type> Y" relationships meaning Y depends on X.
+var reverseDepEdges = map[string]bool{
+	"DEPENDENCY_OF": true, "TEST_DEPENDENCY_OF": true, "DEV_DEPENDENCY_OF": true,
+	"BUILD_DEPENDENCY_OF": true, "OPTIONAL_DEPENDENCY_OF": true,
+	"RUNTIME_DEPENDENCY_OF": true, "PROVIDED_DEPENDENCY_OF": true,
+	"CONTAINED_BY": true,
+}
+
+// IsDependencyEdge reports whether a relationship type expresses a
+// dependency/containment edge between components.
+func IsDependencyEdge(relType string) bool {
+	t := strings.ToUpper(relType)
+	return forwardDepEdges[t] || reverseDepEdges[t]
+}
+
 // graphDepth computes the longest dependency chain via a DFS over forward edges
-// (DEPENDS_ON, CONTAINS) plus reversed DEPENDENCY_OF edges, starting from
-// elements that are described by the document. It is cycle-safe.
+// (forwardDepEdges) plus reversed *_DEPENDENCY_OF edges (reverseDepEdges),
+// starting from elements that are described by the document. It is cycle-safe.
 func graphDepth(p *sbom.Parsed) int {
 	adj := map[string][]string{}
 	add := func(from, to string) {
@@ -79,13 +105,14 @@ func graphDepth(p *sbom.Parsed) int {
 	}
 	roots := map[string]bool{}
 	for _, r := range p.Relationships {
-		switch strings.ToUpper(r.RelationshipType) {
-		case "DESCRIBES":
+		t := strings.ToUpper(r.RelationshipType)
+		switch {
+		case t == "DESCRIBES":
 			roots[r.RelatedSPDXElement] = true
 			add(r.SPDXElementID, r.RelatedSPDXElement)
-		case "DEPENDS_ON", "CONTAINS", "GENERATED_FROM":
+		case forwardDepEdges[t]:
 			add(r.SPDXElementID, r.RelatedSPDXElement)
-		case "DEPENDENCY_OF", "TEST_DEPENDENCY_OF":
+		case reverseDepEdges[t]:
 			// reverse direction: related depends-on element
 			add(r.RelatedSPDXElement, r.SPDXElementID)
 		}

@@ -1,0 +1,262 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@graph": [
+    {
+      "@id": "_:creationInfo_0",
+      "type": "CreationInfo",
+      "specVersion": "3.0.1",
+      "created": "2026-06-16T16:02:16Z",
+      "createdBy": ["https://example.com/demo/source#org-mikebom"],
+      "createdUsing": ["https://example.com/demo/source#tool-mikebom"]
+    },
+    {
+      "spdxId": "https://example.com/demo/source#tool-mikebom",
+      "type": "Tool",
+      "name": "mikebom-0.1.0-alpha.47",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#org-mikebom",
+      "type": "Organization",
+      "name": "mikebom contributors",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#document",
+      "type": "SpdxDocument",
+      "name": "demo-source-sbom",
+      "dataLicense": "https://spdx.org/licenses/CC0-1.0",
+      "profileConformance": ["core", "software", "simpleLicensing", "expandedLicensing"],
+      "rootElement": ["https://example.com/demo/source#sbom"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#sbom",
+      "type": "software_Sbom",
+      "software_sbomType": ["source"],
+      "rootElement": ["https://example.com/demo/source#pkg-main"],
+      "element": [
+        "https://example.com/demo/source#pkg-main",
+        "https://example.com/demo/source#pkg-cobra",
+        "https://example.com/demo/source#pkg-yaml",
+        "https://example.com/demo/source#pkg-testify"
+      ],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#pkg-main",
+      "type": "software_Package",
+      "name": "demo",
+      "software_packageVersion": "1.0.0",
+      "software_packageUrl": "pkg:generic/demo@1.0.0",
+      "software_primaryPurpose": "application",
+      "suppliedBy": {
+        "spdxId": "https://example.com/demo/source#org-example",
+        "type": "Organization",
+        "name": "example",
+        "creationInfo": "_:creationInfo_0"
+      },
+      "externalIdentifier": [
+        { "type": "ExternalIdentifier", "externalIdentifierType": "cpe23", "identifier": "cpe:2.3:a:example:demo:1.0.0:*:*:*:*:*:*:*" }
+      ],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#pkg-cobra",
+      "type": "software_Package",
+      "name": "github.com/spf13/cobra",
+      "software_packageVersion": "v1.8.0",
+      "suppliedBy": "https://example.com/demo/source#org-spf13",
+      "verifiedUsing": [
+        { "type": "Hash", "algorithm": "sha256", "hashValue": "aaaa0000bbbb1111cccc2222dddd3333eeee4444ffff5555aaaa6666bbbb7777" }
+      ],
+      "externalIdentifier": [
+        { "type": "ExternalIdentifier", "externalIdentifierType": "packageUrl", "identifier": "pkg:golang/github.com/spf13/cobra@v1.8.0" },
+        { "type": "ExternalIdentifier", "externalIdentifierType": "cpe23", "identifier": "cpe:2.3:a:spf13:cobra:v1.8.0:*:*:*:*:*:*:*" }
+      ],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#org-spf13",
+      "type": "Organization",
+      "name": "github.com/spf13",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#pkg-yaml",
+      "type": "software_Package",
+      "name": "gopkg.in/yaml.v3",
+      "software_packageVersion": "v3.0.1",
+      "software_packageUrl": "pkg:golang/gopkg.in/yaml.v3@v3.0.1",
+      "suppliedBy": "https://example.com/demo/source#org-gopkg",
+      "verifiedUsing": [
+        { "type": "Hash", "algorithm": "sha256", "hashValue": "1111000022223333444455556666777788889999aaaabbbbccccddddeeeeffff" }
+      ],
+      "externalIdentifier": [
+        { "type": "ExternalIdentifier", "externalIdentifierType": "cpe23", "identifier": "cpe:2.3:a:yaml:yaml.v3:v3.0.1:*:*:*:*:*:*:*" }
+      ],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#org-gopkg",
+      "type": "Organization",
+      "name": "gopkg.in",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#pkg-testify",
+      "type": "software_Package",
+      "name": "github.com/stretchr/testify",
+      "software_packageVersion": "v1.9.0",
+      "software_packageUrl": "pkg:golang/github.com/stretchr/testify@v1.9.0",
+      "suppliedBy": "https://example.com/demo/source#org-stretchr",
+      "verifiedUsing": [
+        { "type": "Hash", "algorithm": "sha256", "hashValue": "2222000033334444555566667777888899990000aaaabbbbccccddddeeeeffff" }
+      ],
+      "externalIdentifier": [
+        { "type": "ExternalIdentifier", "externalIdentifierType": "cpe23", "identifier": "cpe:2.3:a:stretchr:testify:v1.9.0:*:*:*:*:*:*:*" }
+      ],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#org-stretchr",
+      "type": "Organization",
+      "name": "github.com/stretchr",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-apache",
+      "type": "simplelicensing_LicenseExpression",
+      "simplelicensing_licenseExpression": "Apache-2.0",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-yaml",
+      "type": "expandedlicensing_ConjunctiveLicenseSet",
+      "expandedlicensing_member": ["http://spdx.org/licenses/MIT", "http://spdx.org/licenses/Apache-2.0"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#rel-describes",
+      "type": "Relationship",
+      "relationshipType": "describes",
+      "from": "https://example.com/demo/source#document",
+      "to": ["https://example.com/demo/source#pkg-main"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#rel-main-cobra",
+      "type": "LifecycleScopedRelationship",
+      "relationshipType": "dependsOn",
+      "scope": "runtime",
+      "from": "https://example.com/demo/source#pkg-main",
+      "to": ["https://example.com/demo/source#pkg-cobra"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#rel-cobra-yaml",
+      "type": "Relationship",
+      "relationshipType": "dependsOn",
+      "from": "https://example.com/demo/source#pkg-cobra",
+      "to": ["https://example.com/demo/source#pkg-yaml"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#rel-main-testify",
+      "type": "LifecycleScopedRelationship",
+      "relationshipType": "dependsOn",
+      "scope": "test",
+      "from": "https://example.com/demo/source#pkg-main",
+      "to": ["https://example.com/demo/source#pkg-testify"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-main-declared",
+      "type": "Relationship",
+      "relationshipType": "hasDeclaredLicense",
+      "from": "https://example.com/demo/source#pkg-main",
+      "to": ["https://example.com/demo/source#lic-apache"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-main-concluded",
+      "type": "Relationship",
+      "relationshipType": "hasConcludedLicense",
+      "from": "https://example.com/demo/source#pkg-main",
+      "to": ["https://spdx.org/rdf/3.0.1/terms/ExpandedLicensing/NoAssertionLicense"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-cobra-declared",
+      "type": "Relationship",
+      "relationshipType": "hasDeclaredLicense",
+      "from": "https://example.com/demo/source#pkg-cobra",
+      "to": ["http://spdx.org/licenses/Apache-2.0"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-yaml-declared",
+      "type": "Relationship",
+      "relationshipType": "hasDeclaredLicense",
+      "from": "https://example.com/demo/source#pkg-yaml",
+      "to": ["https://example.com/demo/source#lic-yaml"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#lic-testify-declared",
+      "type": "Relationship",
+      "relationshipType": "hasDeclaredLicense",
+      "from": "https://example.com/demo/source#pkg-testify",
+      "to": ["http://spdx.org/licenses/MIT"],
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-main-tier",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#pkg-main",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-cobra-tier",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#pkg-cobra",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-yaml-tier",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#pkg-yaml",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:sbom-tier\",\"value\":\"source\"}",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-testify-scope",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#pkg-testify",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:lifecycle-scope\",\"value\":\"test\"}",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-doc-context",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#document",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:generation-context\",\"value\":\"filesystem-scan\"}",
+      "creationInfo": "_:creationInfo_0"
+    },
+    {
+      "spdxId": "https://example.com/demo/source#ann-doc-completeness",
+      "type": "Annotation",
+      "annotationType": "other",
+      "subject": "https://example.com/demo/source#document",
+      "statement": "{\"schema\":\"mikebom-annotation/v1\",\"field\":\"mikebom:graph-completeness\",\"value\":\"partial\"}",
+      "creationInfo": "_:creationInfo_0"
+    }
+  ]
+}

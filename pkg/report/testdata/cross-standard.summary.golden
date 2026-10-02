@@ -17,4 +17,5 @@ Annotations/Transparency  Low      1/5    3/5    B
 OVERALL (weighted)                 3.1    3.6    B
 
 Findings: MISSING_COMPONENT=2  LICENSE_GAP=2
+CISA 2026 minimum elements met: A 11/16   B 10/16
 Differences: true   Significant: false
